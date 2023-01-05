@@ -134,4 +134,4 @@ dmypy.json
 /storage/diff1/*
 /storage/diff2/*
 /storage/model_weights/*
-/storage/test_images/*
+/storage/test_image/*
