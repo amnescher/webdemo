@@ -8,7 +8,10 @@ import json
 import uuid
 import base64
 from glob import glob
+from omegaconf import OmegaConf
 
+
+port_config = OmegaConf.load("/home/storage/config.yaml")
 st.set_page_config(page_title="Document Understanding", page_icon="👀")
 
 
@@ -24,7 +27,6 @@ if app_mode == "Info":
     including document classification, information extraction and visual question answering. """
 )
 
-
 if app_mode=="Document Parsing":
 
         st.markdown("Document Parsing")
@@ -34,7 +36,7 @@ if app_mode=="Document Parsing":
             st.image(Image.open(uploaded_file))
         if uploaded_file and run:
             files = {"file": uploaded_file.getvalue()}
-            res = requests.post(f"http://donut:8503/donut_pars", files=files)
+            res = requests.post(f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files)
             response = res.json()
             st.text_area(label="Output Data:", value=response, height=300)
 
@@ -50,7 +52,7 @@ elif app_mode=="Document Visual Question Answering":
         if uploaded_file and run:
             files = {"file": uploaded_file.getvalue()}
             data={"question":user_input}
-            res = requests.post(f"http://donut:8503/donut_vqa", data = data, files=files)
+            res = requests.post(f"http://{config.model_ports.donut[-1]}:8503/donut_vqa", data = data, files=files)
             response = res.json()
             st.text_area(label="Output Data:", value=response, height=300)
 

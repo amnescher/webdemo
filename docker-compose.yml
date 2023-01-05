@@ -10,10 +10,10 @@ services:
       volumes:
           - ./storage:/home/storage
       depends_on:
-        - backend_stable1
-        - backend_stable2
-        - donut
-  backend_stable1:
+        - backend_stable_v1_1
+        - backend_stable_v2_1
+        - donut_1
+  backend_stable_v1_1:
     build: 
       context: stablediffusion1
       network: host
@@ -32,7 +32,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     volumes:
          - ./storage:/home/storage/
-  backend_stable2:
+  backend_stable_v2_1:
     build: 
       context: stablediffusion2
       network: host
@@ -51,7 +51,7 @@ services:
     - NVIDIA_VISIBLE_DEVICES=all
     volumes:
          - ./storage:/home/storage/
-  donut:
+  donut_1:
     build: 
       context: donut
       network: host

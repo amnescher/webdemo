@@ -9,8 +9,9 @@ import json
 import uuid
 import base64
 from glob import glob
+from omegaconf import OmegaConf
 
-
+port_config = OmegaConf.load("/home/storage/config.yaml")
 st.set_page_config(page_title="Stable Difussion Version 1", page_icon="🖼")
 
 st.sidebar.header("Select a service")
@@ -44,7 +45,7 @@ if app_mode == "Image Generation":
     run = st.button("Generate")
     if run and desc:
         payload = {"name": desc, "w":w,"h":h,"samples":samples,"n_iter":n_iter,"seed":s}
-        res = requests.post(f"http://backend_stable2:8505/txt2img", data=json.dumps(payload))
+        res = requests.post(f"http://{port_config.model_ports.stablediff2[-1]}:8505/txt2img", data=json.dumps(payload))
         response = res.json()
         st.image(Image.open(response["response"]["image"]))
         zip_path = response["response"]["path"]
@@ -86,7 +87,7 @@ elif app_mode=="Image Modification":
     if uploaded_file and desc and run:
         files = {'files': uploaded_file.getvalue()}
         payload =payload = {"name": desc,"samples":samples,"n_iter":n_iter,"seed":s,"strength":strng}
-        res = requests.post(f"http://backend_stable2:8505/img2img", params=payload, files=files)
+        res = requests.post(f"http://{port_config.model_ports.stablediff2[-1]}:8505/img2img", params=payload, files=files)
         response = res.json()
         st.image(Image.open(response["response"]["image"]))
         zip_path = response["response"]["path"]
@@ -122,7 +123,7 @@ elif app_mode == "Upscaling":
             if uploaded_file and run :
                 files = {'files': uploaded_file.getvalue()}
                 payload = {"prompt": prompt,"samples":num_samples,"steps":steps,"seed":seed,"scale":scale,"eta":eta}
-                res = requests.post(f"http://backend_stable2:8505/upscale", params=payload, files=files)
+                res = requests.post(f"http://{port_config.model_ports.stablediff2[-1]}:8505/upscale", params=payload, files=files)
                 response = res.json()
                 zip_path = response["response"]["image"]
                 filename_list = glob(os.path.join(zip_path, "*.png"))
