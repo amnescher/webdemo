@@ -1,0 +1,72 @@
+version: '3.4'
+services:
+  frontend:
+      build:
+        context: frontend
+        network: host
+      command: streamlit run HOME.py
+      ports:
+        - 8501:8501
+      volumes:
+          - ./storage:/home/storage
+      depends_on:
+        - backend_stable1
+        - backend_stable2
+        - donut
+  backend_stable1:
+    build: 
+      context: stablediffusion1
+      network: host
+    command: conda run --no-capture-output -n ldm python backend.py
+    ports:
+      - 8504:8504
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+         - ./storage:/home/storage/
+  backend_stable2:
+    build: 
+      context: stablediffusion2
+      network: host
+    command:  conda run --no-capture-output -n myenv python backend.py
+    ports:
+      - 8505:8505
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+         - ./storage:/home/storage/
+  donut:
+    build: 
+      context: donut
+      network: host
+    command: python3 backend.py
+    ports:
+      - 8503:8503
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+         - ./storage:/home/storage/
