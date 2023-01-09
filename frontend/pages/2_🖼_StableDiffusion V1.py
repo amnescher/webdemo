@@ -11,18 +11,39 @@ import base64
 from glob import glob
 from omegaconf import OmegaConf
 
+
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+    st.markdown(
+        f"""
+    <style>
+    .stApp {{
+        background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
+        background-size: cover
+    }}
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
+add_bg_from_local("/home/storage/frontend/logo.jpeg")   
+
 port_config = OmegaConf.load("/home/storage/config.yaml")
-st.set_page_config(page_title="Stable Difussion Version 1", page_icon="🖼")
+
+
+
+
+port_config = OmegaConf.load("/home/storage/config.yaml")
+#st.set_page_config(page_title="Stable Difussion Version 1", page_icon="🖼")
 st.sidebar.header("Select a service")
 app_mode = st.sidebar.selectbox(
    "Options",
     [ "Info","Image Generation","Image Modification"],
 )
 if app_mode == "Info":
-    st.markdown("Stable Diffusion")
+    st.markdown("# Stable Diffusion Version 1")
     st.write(
-    """Document images, such as commercial invoices, receipts, IDs, and business cards, are easy to find in modern working environments. To extract useful information from such document images, Eschercloud AI offers state-of-the-art Document Understanding  (DU) models for different industries with applications 
-    including document classification, information extraction and visual question answering. """
+    """ StableDiffusion 1 """
 )
 
 
