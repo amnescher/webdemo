@@ -1,6 +1,10 @@
 # webdemo
 
+## Weights
 
+Obtain model weights (model.ckpt,model_diff1.ckpt,x4-upscaler-ema.ckpt) and copy them into the corresponding directories in storage directory.
+
+## Storage Directory
 This repository assumes the following structure of storage directory:
 
 ```
@@ -27,4 +31,18 @@ storage
 │       ├── model.ckpt
 │       └── x4-upscaler-ema.ckpt
 └── test_image
+```
+## Build and run docker images 
+
+In the webdemo directory run following command:
+
+```
+sudo docker compose build
+sudo docker compose up
+```
+
+The names of the services are stored in the config.yaml file in the storage directory, along with a list of the ports that the frontend end uses to send requests to each service. The example that follows shows how to send a request from the front-end service to the donut backend service using the first item (donut[-1]) in the list of the port names associated with the donut service.
+
+```
+requests.post(f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files)
 ```
