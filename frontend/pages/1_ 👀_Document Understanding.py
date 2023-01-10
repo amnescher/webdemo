@@ -10,6 +10,7 @@ import base64
 from glob import glob
 from omegaconf import OmegaConf
 
+# Adding background image
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read())
@@ -24,22 +25,23 @@ def add_bg_from_local(image_file):
     """,
         unsafe_allow_html=True,
     )
-add_bg_from_local("/home/storage/frontend/logo.jpeg")   
 
-port_config = OmegaConf.load("/home/storage/config.yaml")
-#st.set_page_config(page_title="Document Understanding", page_icon="👀")
-image_id = Image.open('/home/storage/frontend/ocr.jpeg')
+add_bg_from_local("/home/storage/frontend/logo.jpeg")
+image_id = Image.open("/home/storage/frontend/ocr.jpeg")
 
 st.sidebar.header("Select a service")
+# load port configuration
+port_config = OmegaConf.load("/home/storage/config.yaml")
 app_mode = st.sidebar.selectbox(
-   "Options",
-    [ "Info","Document Parsing","Document Visual Question Answering"],
+    "Options",
+    ["Info", "Document Parsing", "Document Visual Question Answering"],
 )
 if app_mode == "Info":
     st.markdown("# Document Understanding")
     st.image(image_id)
+    # add description
     st.write(
-    """## What is Document Understanding?
+        """## What is Document Understanding?
 
 Document understanding also known as Optical Character Recognition (OCR) is a technology that enables the recognition of characters from images and scanned documents. It is used to extract text from images and make it available in a digital format that can be read and understood by humans and machines. OCR technology is used to automate document processing, improve compliance, and enable automation. OCR has the potential to streamline processes and help organizations save time and money. 
 
@@ -55,37 +57,52 @@ When it comes to KYC and KYB checks, businesses process many identity documents 
 
 The most obvious benefit of OCR is its ability to automate document processing. By using OCR, organizations can quickly and accurately process documents without having to manually enter data. This can help reduce document processing time and costs. In addition, OCR can help improve accuracy and compliance. By using OCR, organizations can quickly and accurately process documents and ensure that the information is accurate and up-to-date. This helps to reduce errors and ensure compliance with regulations. The use of OCR technology can also help to improve the customer experience. By using OCR, organizations can quickly and accurately process customer information and provide customers with a better experience. This can help to improve customer satisfaction and loyalty. Finally, OCR technology can help organizations reduce costs. By using OCR, organizations can quickly and accurately process documents without having to manually enter data. This can help to reduce document processing time and costs, which can lead to cost savings for organizations.
          """
-)
+    )
 
-if app_mode=="Document Parsing":
+if app_mode == "Document Parsing":
+    st.markdown("# Document Information Extraction")
+    st.write(
+        "Document information extraction tasks a document image and the AI model returns structured form of information existed in the image. The AI model not only reads the characters well, but also understand the layouts and semantics to infer the groups and nested hierarchies among the texts."
+    )
+    #Load input image
+    uploaded_file = st.file_uploader("Upload a image", type=["jpg", "jpeg", "png"])
+    run = st.button("Parsing")
+    if uploaded_file:
+        st.image(Image.open(uploaded_file))
+    if uploaded_file and run:
+        files = {"file": uploaded_file.getvalue()}
+        #send request to backend donut model
+        res = requests.post(
+            f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files
+        )
+        #get the response back from backend
+        response = res.json()
+        # show the response 
+        st.text_area(label="Output Data:", value=response, height=300)
 
-        st.markdown("# Document Information Extraction")
-        st.write("Document information extraction tasks a document image and the AI model returns structured form of information existed in the image. The AI model not only reads the characters well, but also understand the layouts and semantics to infer the groups and nested hierarchies among the texts.")
-        uploaded_file = st.file_uploader("Upload a image", type=["jpg", "jpeg", "png"])
+elif app_mode == "Document Visual Question Answering":
+
+    st.markdown("# Document Visual Question Answering")
+
+    st.write(
+        " In Document Visual Question Answering a document image and question pair is given and the AI model predicts the answer for the question by capturing both visual and textual information within the image."
+    )
+    #Load input image
+    uploaded_file = st.file_uploader("Upload a image", type=["jpg", "jpeg", "png"])
+    if uploaded_file:
+        st.image(Image.open(uploaded_file))
+        #get the input question
+        user_input = st.text_input("QUESTION")
         run = st.button("Parsing")
-        if uploaded_file:
-            st.image(Image.open(uploaded_file))
-        if uploaded_file and run:
-            files = {"file": uploaded_file.getvalue()}
-            res = requests.post(f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files)
-            response = res.json()
-            st.text_area(label="Output Data:", value=response, height=300)
-
-elif app_mode=="Document Visual Question Answering": 
-
-        st.markdown("# Document Visual Question Answering")
-
-        st.write(" In Document Visual Question Answering a document image and question pair is given and the AI model predicts the answer for the question by capturing both visual and textual information within the image.")
-
-        uploaded_file = st.file_uploader("Upload a image", type=["jpg", "jpeg", "png"])
-        if uploaded_file:
-            st.image(Image.open(uploaded_file))
-            user_input = st.text_input("QUESTION")
-            run = st.button("Parsing")
-        if uploaded_file and run:
-            files = {"file": uploaded_file.getvalue()}
-            data={"question":user_input}
-            res = requests.post(f"http://{config.model_ports.donut[-1]}:8503/donut_vqa", data = data, files=files)
-            response = res.json()
-            st.text_area(label="Output Data:", value=response, height=300)
-
+    if uploaded_file and run:
+        files = {"file": uploaded_file.getvalue()}
+        data = {"question": user_input}
+        #send request to backend
+        res = requests.post(
+            f"http://{config.model_ports.donut[-1]}:8503/donut_vqa",
+            data=data,
+            files=files,
+        )
+        # get the response back and show the results
+        response = res.json()
+        st.text_area(label="Output Data:", value=response, height=300)
