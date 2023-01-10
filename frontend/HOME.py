@@ -20,11 +20,11 @@ add_bg_from_local("storage/frontend/logo.jpeg")
 st.write("# ESCERCLOUD AI Computer Vision Services - Demo! 👋")
 
 st.write("# Document Understanding")
-st.write("##### Document understanding is the process of automatically extracting, classifying, interpreting, contextualising, and searching information from documents using machine learning, computer vision, and natural language processing technologies. Major use cases include KYC, KYB, reviewing text within legal contracts, leases, and other documents to automate business processes.")
+st.write("###### Document understanding is the process of automatically extracting, classifying, interpreting, contextualising, and searching information from documents using machine learning, computer vision, and natural language processing technologies. Major use cases include KYC, KYB, reviewing text within legal contracts, leases, and other documents to automate business processes.")
 image_id = Image.open('/home/storage/frontend/id.png')
 st.image(image_id)
 st.markdown(""" # Stable Diffusion 
-##### Stable Diffusion includes text-to-image,and image-to-image models that will enables users to create stunning art within seconds. **Versions1**  and **Version 2** of Stable Diffusion generate images with resolutions of **512x512** and **768x768** pixels in turn, respectively, in a matter of seconds.""")
+###### Stable Diffusion includes text-to-image,and image-to-image models that enables users to create stunning art within seconds. **Versions1**  and **Version 2** of Stable Diffusion generate images with resolutions of **512x512** and **768x768** pixels in turn, respectively, in a matter of seconds.""")
 
 image = Image.open('/home/storage/frontend/butterfly.jpeg')
 
