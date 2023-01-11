@@ -58,3 +58,16 @@ def diff_model(
         path = inference(image_path,prompt,seed_num,scale,steps,eta,num_samples)
         shutil.make_archive(path, "zip", path)
         return  path
+diff_model(
+    "test",
+    "txt2img",
+    image_path=None,
+    strength=0.8,
+    dim=(256, 256),
+    seed_num=42,
+    num_samples=3,
+    n_iter=2,
+    eta = 0,
+    scale =9,
+    steps = 50
+)

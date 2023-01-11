@@ -20,7 +20,7 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 ADD .  .
 ENV PATH=$home/bin:$PATH
 RUN conda update -n base -c defaults conda &&\
-    conda env create -f  myenv.yaml 
+    conda env create -f  environments.yml 
 SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
 
 RUN apt-get update

@@ -46,3 +46,6 @@ The names of the services are stored in the config.yaml file in the storage dire
 ```
 requests.post(f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files)
 ```
+
+## backend.py
+Every backend service (stablediffusion1, stablediffusion2, donut) uses a backend.py script to receive API requests, process them with the appropriate AI model, and then respond to the request with the model's outputs. Responses to stablediffusion1 and stablediffusion2 are paths to the directories where the generated images are stored, allowing the front end to read these paths and display the images to the user, while the response to the donut model is a.json file containing the extracted texts from the document image.
