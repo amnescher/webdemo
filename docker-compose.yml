@@ -11,8 +11,8 @@ services:
           - ./storage:/home/storage
       depends_on:
         - backend_stable_v1_1
-        - backend_stable_v2_1
         - donut_1
+        - backend_stable_v2_1
   backend_stable_v1_1:
     build: 
       context: stablediffusion1
