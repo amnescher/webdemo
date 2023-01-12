@@ -272,8 +272,8 @@ def txt2img_infer(input_prompt,input_plms=True,dim = (512,512),seed_num = 42,n_s
             data = list(chunk(data, batch_size))
     #add a random string to path to make multi request possible and avoid name conflict
     
-    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+input_prompt+"_"+str(seed_num))
-    grid_path = os.path.join(outpath, "grid"+"_"+str(uuid.uuid4())+"_"+input_prompt+"_"+str(seed_num))
+    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed_num))
+    grid_path = os.path.join(outpath, "grid"+"_"+str(uuid.uuid4())+"_"+str(seed_num))
 
     os.makedirs(sample_path, exist_ok=True)
     os.makedirs(grid_path, exist_ok=True)

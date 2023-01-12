@@ -223,8 +223,8 @@ def main(opt):
             data = [p for p in data for i in range(opt.repeat)]
             data = list(chunk(data, batch_size))
 
-    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+prompt+"_"+str(opt.seed))
-    grid_path = os.path.join(outpath, "grid"+"_"+str(uuid.uuid4())+"_"+prompt+"_"+str(opt.seed))
+    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(opt.seed))
+    grid_path = os.path.join(outpath, "grid"+"_"+str(uuid.uuid4())+"_"+str(opt.seed))
 
     #sample_path = os.path.join(outpath, "samples")
     os.makedirs(sample_path, exist_ok=True)

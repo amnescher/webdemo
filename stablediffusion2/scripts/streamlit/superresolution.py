@@ -149,7 +149,7 @@ def inference(image, prompt,seed,scale,steps,eta,num_samples):
             eta=eta
         )
     outpath = "/home/storage/diff2/upscale/"
-    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+prompt+"_"+str(seed))
+    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed))
     os.makedirs(sample_path, exist_ok=True)
     for base_count,image in enumerate(result):
         image.save(os.path.join(sample_path, f"{base_count:05}.png"))

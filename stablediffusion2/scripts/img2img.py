@@ -215,8 +215,8 @@ def img2img_infer(input_image,input_prompt="a painting of a virus monster playin
             data = list(chunk(data, batch_size))
 
     
-    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+input_prompt+"_"+str(input_strength) +"_"+str(seed_num))
-    grid_path = os.path.join(outpath, "grid"+"_"+str(uuid.uuid4())+"_"+input_prompt+"_"+str(input_strength) +"_"+str(seed_num))
+    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(input_strength) +"_"+str(seed_num))
+    grid_path = os.path.join(outpath, "grid"+"_"+str(uuid.uuid4())+"_"+str(input_strength) +"_"+str(seed_num))
     os.makedirs(sample_path, exist_ok=True)
     os.makedirs(grid_path, exist_ok=True)
     base_count = len(os.listdir(sample_path))
