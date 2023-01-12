@@ -2,7 +2,7 @@
 
 ## Weights
 
-Obtain model weights (model.ckpt,model_diff1.ckpt,x4-upscaler-ema.ckpt) and copy them into the corresponding directories in storage directory.
+Obtain model weights [here](https://eschercloudai-my.sharepoint.com/:f:/g/personal/a_sabet_eschercloud_ai/EiJWs38Yl4FDgyFYrQOhkg4BPoqlLKAhSXlhzBPDgwD18w?e=rsJiUu), unzip the file and copy it into storage directory.
 
 ## Storage Directory
 This repository assumes the following structure of storage directory:
