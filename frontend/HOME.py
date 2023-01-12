@@ -19,7 +19,7 @@ def add_bg_from_local(image_file):
     )
 
 # Load background images
-add_bg_from_local("storage/frontend/logo.jpeg")
+#add_bg_from_local("storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/id.png")
 image_stablediff = Image.open("/home/storage/frontend/butterfly.jpeg")
 # Page title

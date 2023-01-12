@@ -26,7 +26,7 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local("/home/storage/frontend/logo.jpeg")
+#add_bg_from_local("/home/storage/frontend/logo.jpeg")
 #Read port config file
 port_config = OmegaConf.load("/home/storage/config.yaml")
 

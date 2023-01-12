@@ -9,6 +9,8 @@ import uuid
 import base64
 from glob import glob
 from omegaconf import OmegaConf
+from itertools import cycle
+import json
 
 
 def add_bg_from_local(image_file):
@@ -27,16 +29,16 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local("/home/storage/frontend/logo.jpeg")
+#add_bg_from_local("/home/storage/frontend/logo.jpeg")
 
-port_config = OmegaConf.load("/home/storage/config.yaml")
+#port_config = OmegaConf.load("/home/storage/config.yaml")
 
 
 
 st.sidebar.header("Select a service")
 app_mode = st.sidebar.selectbox(
     "Options",
-    ["Info", "Image Generation", "Image Modification"],
+    ["Info", "Image Generation", "Image Modification","Exploring"],
 )
 if app_mode == "Info":
     st.markdown("# Stable Diffusion Version 1")
@@ -59,6 +61,7 @@ Here are some of the ways that SDIG is transforming various industries:
     )
 
 port_config = OmegaConf.load("/home/storage/config.yaml")
+
 if app_mode == "Image Generation":
     st.markdown("# Stable Diffusion Version 1 - Image Generation")
     # Get configuration from user
@@ -186,3 +189,11 @@ elif app_mode == "Image Modification":
             shutil.rmtree(zip_path)
             shutil.rmtree(grid_path)
             os.remove(zip_path + ".zip")
+elif app_mode == "Exploring":
+    f = open('storage/frontend/exploring_stable_v1/prompt.json')
+    images = json.load(f)
+
+    cols = cycle(st.columns(2)) # st.columns here since it is out of beta at the time I'm writing this
+    for key,val in images.items() :
+        next(cols).image(Image.open("storage/frontend/exploring_stable_v1/"+key), width=256, caption=val)
+

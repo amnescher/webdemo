@@ -26,7 +26,7 @@ def add_bg_from_local(image_file):
         unsafe_allow_html=True,
     )
 
-add_bg_from_local("/home/storage/frontend/logo.jpeg")
+#add_bg_from_local("/home/storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/ocr.jpeg")
 
 st.sidebar.header("Select a service")
