@@ -151,7 +151,7 @@ def parse_args():
     parser.add_argument(
         "--ckpt",
         type=str,
-        default = "storage/model_weights/diff2/model.ckpt",
+        default = "storage/model_weights/diff2/model_v2_768.ckpt",
         help="path to checkpoint of model",
     )
     parser.add_argument(

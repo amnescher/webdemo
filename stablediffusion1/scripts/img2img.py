@@ -178,7 +178,7 @@ def img2img_infer(input_image,input_prompt="a painting of a virus monster playin
     parser.add_argument(
         "--ckpt",
         type=str,
-        default="storage/model_weights/diff1/model_diff1.ckpt",
+        default="storage/model_weights/diff1/model_v1.ckpt",
         help="path to checkpoint of model",
     )
     parser.add_argument(
