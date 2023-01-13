@@ -1,0 +1,17 @@
+credentials:
+  usernames:
+    jsmith:
+      email: a.sabet@eschercloud.ai
+      name: Amin Sabet
+      password: '123' # To be replaced with hashed password
+    rbriggs:
+      email: user@eschercloud.ai
+      name: user
+      password: '123' # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: random_signature_key
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - a.sabet@eschercloud.ai

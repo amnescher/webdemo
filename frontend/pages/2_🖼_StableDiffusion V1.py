@@ -35,7 +35,7 @@ def add_bg_from_local(image_file):
 
 
 
-st.sidebar.header("Select a service")
+st.sidebar.header("Select a demo")
 app_mode = st.sidebar.selectbox(
     "Options",
     ["Info", "Image Generation", "Image Modification","Exploring"],
@@ -95,25 +95,33 @@ if app_mode == "Image Generation":
             "seed": s,
         }
         #Send reuest 
-        res = requests.post(
-            f"http://{port_config.model_ports.stablediff1[-1]}:8504/txt2img",
-            data=json.dumps(payload),
-        )
-        response = res.json()
-        #get response back from stable diffusion, including path to generated images.
-        st.image(Image.open(response["response"]["image"]))
-        zip_path = response["response"]["path"]
-        grid_path = response["response"]["grid_path"]
-        # enable user to download the generated image in a zip file
-        with open(zip_path + ".zip", "rb") as file:
-            btn = st.download_button(
-                label="Download Samples",
-                data=file,
-                file_name=zip_path + ".zip",
+        with st.spinner("Generating ..."):
+            res = requests.post(
+                f"http://{port_config.model_ports.stablediff1[-1]}:8504/txt2img",
+                data=json.dumps(payload),
             )
-        shutil.rmtree(zip_path)
-        shutil.rmtree(grid_path)
-        os.remove(zip_path + ".zip")
+        try:
+            response = res.json()
+            zip_path = response["response"]["path"]
+            grid_path = response["response"]["grid_path"]
+            st.success('Successful!')
+            st.image(Image.open(response["response"]["image"]))
+            # enable user to download the generated image in a zip file
+            with open(zip_path + ".zip", "rb") as file:
+                btn = st.download_button(
+                    label="Download Samples",
+                    data=file,
+                    file_name=zip_path + ".zip",
+                )
+            shutil.rmtree(zip_path)
+            shutil.rmtree(grid_path)
+            os.remove(zip_path + ".zip")
+
+        except NameError:
+            st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+        except json.decoder.JSONDecodeError: 
+            st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+        
 # image to image
 elif app_mode == "Image Modification":
     st.markdown("# Stable Diffusion Version 1 - Image Modification")
@@ -168,27 +176,35 @@ elif app_mode == "Image Modification":
                 "seed": s,
                 "strength": strng,
             }
-            res = requests.post(
-                f"http://{port_config.model_ports.stablediff1[-1]}:8504/img2img",
-                params=payload,
-                files=files,
-            )
-            #get the response back that includes pathes to generated images
-            response = res.json()
-            st.image(Image.open(response["response"]["image"]))
-            zip_path = response["response"]["path"]
-            grid_path = response["response"]["grid_path"]
-            #enable user to download generated image
-            with open(zip_path + ".zip", "rb") as file:
-                btn = st.download_button(
-                    label="Download Samples",
-                    data=file,
-                    file_name=zip_path + ".zip",
+            with st.spinner("Generating ..."):
+                res = requests.post(
+                    f"http://{port_config.model_ports.stablediff1[-1]}:8504/img2img",
+                    params=payload,
+                    files=files,
                 )
-            #delete generated images/directory to save space
-            shutil.rmtree(zip_path)
-            shutil.rmtree(grid_path)
-            os.remove(zip_path + ".zip")
+            #get the response back that includes pathes to generated images
+            try:
+                response = res.json()
+                zip_path = response["response"]["path"]
+                grid_path = response["response"]["grid_path"]
+                st.success('Successful!')
+                st.image(Image.open(response["response"]["image"]))
+                #enable user to download generated image
+                with open(zip_path + ".zip", "rb") as file:
+                    btn = st.download_button(
+                        label="Download Samples",
+                        data=file,
+                        file_name=zip_path + ".zip",
+                    )
+                #delete generated images/directory to save space
+                shutil.rmtree(zip_path)
+                shutil.rmtree(grid_path)
+                os.remove(zip_path + ".zip")
+            
+            except NameError:
+                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+            except json.decoder.JSONDecodeError: 
+                st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
 elif app_mode == "Exploring":
     f = open('storage/frontend/exploring_stable_v1/prompt.json')
     images = json.load(f)

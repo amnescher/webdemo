@@ -6,3 +6,4 @@ uvicorn
 streamlit
 fastapi
 OmegaConf
+streamlit-authenticator

@@ -29,7 +29,7 @@ def add_bg_from_local(image_file):
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/ocr.jpeg")
 
-st.sidebar.header("Select a service")
+st.sidebar.header("Select a demo")
 # load port configuration
 port_config = OmegaConf.load("/home/storage/config.yaml")
 app_mode = st.sidebar.selectbox(
@@ -66,19 +66,27 @@ if app_mode == "Document Parsing":
     )
     #Load input image
     uploaded_file = st.file_uploader("Upload a image", type=["jpg", "jpeg", "png"])
-    run = st.button("Parsing")
     if uploaded_file:
         st.image(Image.open(uploaded_file))
+        run = st.button("Parsing")
     if uploaded_file and run:
         files = {"file": uploaded_file.getvalue()}
+        with st.spinner("Processing ..."):
         #send request to backend donut model
-        res = requests.post(
-            f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files
-        )
+            res = requests.post(
+                f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files
+            )
         #get the response back from backend
-        response = res.json()
-        # show the response 
-        st.text_area(label="Output Data:", value=response, height=300)
+        try:
+                response = res.json()
+                 # show the response 
+                st.text_area(label="Output Data:", value=response, height=300)
+        except NameError:
+                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+        except json.decoder.JSONDecodeError: 
+                st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+       
+       
 
 elif app_mode == "Document Visual Question Answering":
 
@@ -97,12 +105,19 @@ elif app_mode == "Document Visual Question Answering":
     if uploaded_file and run:
         files = {"file": uploaded_file.getvalue()}
         data = {"question": user_input}
+        with st.spinner("Processing ..."):
         #send request to backend
-        res = requests.post(
-            f"http://{config.model_ports.donut[-1]}:8503/donut_vqa",
-            data=data,
-            files=files,
-        )
+            res = requests.post(
+                f"http://{config.model_ports.donut[-1]}:8503/donut_vqa",
+                data=data,
+                files=files,
+            )
         # get the response back and show the results
-        response = res.json()
-        st.text_area(label="Output Data:", value=response, height=300)
+        try:
+                response = res.json()
+                 # show the response 
+                st.text_area(label="Output Data:", value=response, height=300)
+        except NameError:
+                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+        except json.decoder.JSONDecodeError: 
+                st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
