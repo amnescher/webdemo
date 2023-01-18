@@ -13,6 +13,7 @@ services:
         - backend_stable_v1_1
         - donut_1
         - backend_stable_v2_1
+        - gfpgan_1
   backend_stable_v1_1:
     build: 
       context: stablediffusion1
@@ -58,6 +59,25 @@ services:
     command: python3 backend.py
     ports:
       - 8503:8503
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+         - ./storage:/home/storage/
+  gfpgan_1:
+    build: 
+      context: GFPGAN
+      network: host
+    command: python3 backend.py
+    ports:
+      - 8506:8506
     deploy:
       resources:
         reservations:

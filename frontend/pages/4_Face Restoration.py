@@ -78,7 +78,7 @@ if app_mode == "Face Restoration":
                     # delete generated images and directories
                 shutil.rmtree(result_path)
                 os.remove(result_path + ".zip")
-            #     # enable user to download generated images 
+              # enable user to download generated images 
             except NameError:
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
             except json.decoder.JSONDecodeError: 
