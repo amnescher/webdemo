@@ -131,6 +131,7 @@ dmypy.json
 
 .ipynb_checkpoints
 .ckpt
+.pth
 /storage/diff1/img2img/*
 /storage/diff1/txt2img/*
 /storage/diff2/img2img/*
@@ -139,3 +140,4 @@ dmypy.json
 /storage/model_weights/diff1/*
 /storage/model_weights/diff2/*
 /storage/test_image/*
+/storage/GFPGAN/*
