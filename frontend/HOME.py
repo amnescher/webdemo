@@ -22,6 +22,7 @@ def add_bg_from_local(image_file):
 #add_bg_from_local("storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/id.png")
 image_stablediff = Image.open("/home/storage/frontend/butterfly.jpeg")
+
 # Page title
 st.write("# ESCERCLOUD AI Computer Vision Services - Demo! 👋")
 # Page description
@@ -40,3 +41,18 @@ st.image(
 )
 
 st.sidebar.success("Select a demo above.")
+
+
+# cur = mydb.cursor()
+# cur.execute("USE DB")
+
+# sql_stmt = f"SELECT * FROM Orders"
+
+# cur.execute(sql_stmt)
+# response = cur.fetchall()
+
+# for row in response:
+    
+#     st.text('This is some text.')
+# cur.close()
+# mydb.close()

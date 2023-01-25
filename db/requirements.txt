@@ -8,4 +8,5 @@ fastapi
 OmegaConf
 streamlit-authenticator
 mysql-connector-python
-pandas
+mysql-connector-python
+pydantic

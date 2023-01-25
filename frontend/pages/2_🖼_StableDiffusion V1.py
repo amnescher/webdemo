@@ -11,7 +11,7 @@ from glob import glob
 from omegaconf import OmegaConf
 from itertools import cycle
 import json
-
+import time
 
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
@@ -96,16 +96,30 @@ if app_mode == "Image Generation":
         }
         #Send reuest 
         with st.spinner("Generating ..."):
+            start = time.time()
             res = requests.post(
                 f"http://{port_config.model_ports.stablediff1[-1]}:8504/txt2img",
-                data=json.dumps(payload),
+                data=json.dumps(payload)
             )
+            end = time.time()
         try:
             response = res.json()
             zip_path = response["response"]["path"]
             grid_path = response["response"]["grid_path"]
             st.success('Successful!')
+            payload = {
+                    "req_type": "Stable Diffusion version1 - txt2img",
+                    "prompt": desc,
+                    "runtime": (end - start)
+                    }
+
+            db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
+
             st.image(Image.open(response["response"]["image"]))
+            
             # enable user to download the generated image in a zip file
             with open(zip_path + ".zip", "rb") as file:
                 btn = st.download_button(
@@ -142,7 +156,7 @@ elif app_mode == "Image Modification":
             )
     if uploaded_file:
         # get input prompt and configuration from user
-        desc = st.text_input(
+        Prompt = st.text_input(
             "Prompt",
             value=" A boat is sailing in a fictional ocean in front of mountains.",
             key="Description_key",
@@ -154,7 +168,7 @@ elif app_mode == "Image Modification":
                 value=0.8,
                 step=0.01,
                 format="%.2f",
-                key=str(uuid.uuid4()),
+                key="Strength_key",
             )
         with c2:
             s = st.number_input("Seed", value=42, step=1, key="Seed_key")
@@ -167,27 +181,40 @@ elif app_mode == "Image Modification":
 
         run = st.button("Generate")
         # make request boday and sending request
-        if desc and run:
+        if Prompt and run:
             files = {"files": uploaded_file.getvalue()}
             payload = payload = {
-                "name": desc,
+                "name": Prompt,
                 "samples": samples,
                 "n_iter": n_iter,
                 "seed": s,
                 "strength": strng,
             }
             with st.spinner("Generating ..."):
+                start = time.time()
                 res = requests.post(
                     f"http://{port_config.model_ports.stablediff1[-1]}:8504/img2img",
                     params=payload,
                     files=files,
                 )
+                end = time.time()
             #get the response back that includes pathes to generated images
             try:
                 response = res.json()
                 zip_path = response["response"]["path"]
                 grid_path = response["response"]["grid_path"]
                 st.success('Successful!')
+
+                payload = {
+                    "req_type": "Stable Diffusion version1 - img2img",
+                    "prompt": Prompt,
+                    "runtime": (end - start)
+                    }
+
+                db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
                 st.image(Image.open(response["response"]["image"]))
                 #enable user to download generated image
                 with open(zip_path + ".zip", "rb") as file:

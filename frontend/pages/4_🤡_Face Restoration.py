@@ -9,26 +9,24 @@ import uuid
 import base64
 from glob import glob
 from omegaconf import OmegaConf
-
+import datetime
+import pandas as pd
+from pandas import json_normalize 
+import time
 
 port_config = OmegaConf.load("/home/storage/config.yaml")
-
 st.sidebar.header("Select a demo")
 app_mode = st.sidebar.selectbox(
     "Options",
     ["Info", "Face Restoration"],
 )
+requests.post(f"http://{port_config.model_ports.db[-1]}:8509/initdb")
 if app_mode == "Info":
     st.markdown("# Face Restoration")
     st.write(
         """ ### 
 """
     )
-
-
-        
-# image to image
-if app_mode == "Face Restoration":
     st.markdown("# Face Restoration")
     st.markdown("# Face Restoration")
     # upload input image
@@ -36,6 +34,8 @@ if app_mode == "Face Restoration":
         "Upload a image",
         type=["jpg", "jpeg", "png"],
     )
+
+   
     if uploaded_file:
         st.image(uploaded_file)
         #check if image size is not smaller than 256*256
@@ -50,11 +50,13 @@ if app_mode == "Face Restoration":
                 "upscale": upscale
             }
             with st.spinner("Generating ..."):
+                start = time.time()
                 res = requests.post(
                     f"http://{port_config.model_ports.gfpgan[-1]}:8506/Restoration",
                     params=payload,
                     files=files,
                 )
+                end = time.time()
             try:
                 #get the respons includes paths to generated images
                 response = res.json()
@@ -62,13 +64,30 @@ if app_mode == "Face Restoration":
                 image_path = response["response"]["image"]
                 result_path = response["response"]["path"]
                 st.success('Successful!')
+                payload = {
+                    "req_type": "Face Restoration",
+                    "runtime": (end - start)
+                    }
+                    
+                db_req = requests.post(
+                        f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                        data=json.dumps(payload),
+                    )
+
+                db_req = requests.post(
+                        f"http://{port_config.model_ports.db[-1]}:8509/widgets",
+                        data=json.dumps(payload),
+                    )
+                db_req = db_req.json()
+                df = pd.DataFrame.from_records(db_req["data"])
+                
                 st.image(Image.open(image_path))
                 cmp_list = glob(os.path.join(cmp_path, "*.png"))
                 st.info("Left: Before face restoration.    Right: After face restoration.", icon="ℹ️")
                 for filename in cmp_list:
                      im = Image.open(filename)
                      st.image(im)
-
+                st.table(df)
                 with open(result_path + ".zip", "rb") as file:
                     btn = st.download_button(
                         label="Download Results",
@@ -83,5 +102,3 @@ if app_mode == "Face Restoration":
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
             except json.decoder.JSONDecodeError: 
                 st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
-        
-            

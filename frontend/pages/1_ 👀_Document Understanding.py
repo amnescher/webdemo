@@ -9,22 +9,8 @@ import uuid
 import base64
 from glob import glob
 from omegaconf import OmegaConf
+import time
 
-# Adding background image
-def add_bg_from_local(image_file):
-    with open(image_file, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read())
-    st.markdown(
-        f"""
-    <style>
-    .stApp {{
-        background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
-        background-size: cover
-    }}
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/ocr.jpeg")
@@ -73,14 +59,25 @@ if app_mode == "Document Parsing":
         files = {"file": uploaded_file.getvalue()}
         with st.spinner("Processing ..."):
         #send request to backend donut model
+            start = time.time()
             res = requests.post(
                 f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files
             )
+            end = time.time()
         #get the response back from backend
         try:
                 response = res.json()
                  # show the response 
                 st.text_area(label="Output Data:", value=response, height=300)
+                payload = {
+                    "req_type": "Donut - parsing",
+                    "runtime": (end - start)
+                    }
+
+                db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
         except NameError:
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
         except json.decoder.JSONDecodeError: 
@@ -107,16 +104,27 @@ elif app_mode == "Document Visual Question Answering":
         data = {"question": user_input}
         with st.spinner("Processing ..."):
         #send request to backend
+            start = time.time()
             res = requests.post(
-                f"http://{config.model_ports.donut[-1]}:8503/donut_vqa",
+                f"http://{port_config.model_ports.donut[-1]}:8503/donut_vqa",
                 data=data,
                 files=files,
             )
+            end = time.time()
         # get the response back and show the results
         try:
                 response = res.json()
                  # show the response 
                 st.text_area(label="Output Data:", value=response, height=300)
+                payload = {
+                    "req_type": "Donut - vqa",
+                    "prompt":user_input,
+                    "runtime": (end - start)
+                    }
+                db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
         except NameError:
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
         except json.decoder.JSONDecodeError: 

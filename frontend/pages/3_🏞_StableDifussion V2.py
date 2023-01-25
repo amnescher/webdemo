@@ -9,21 +9,7 @@ import uuid
 import base64
 from glob import glob
 from omegaconf import OmegaConf
-
-def add_bg_from_local(image_file):
-    with open(image_file, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read())
-    st.markdown(
-        f"""
-    <style>
-    .stApp {{
-        background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
-        background-size: cover
-    }}
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
+import time 
 
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
@@ -59,7 +45,7 @@ Here are some of the ways that SDIG is transforming various industries:
 if app_mode == "Image Generation":
     st.markdown("# Stable Diffusion Version 2 - Image Generation")
     #Read input prompt and user configs 
-    desc = st.text_input(
+    Prompt = st.text_input(
         "Prompt",
         value=" portrait photo of a old man crying, Tattles, sitting on bed, guages in ears, looking away, serious eyes, 50mm portrait photography, hard rim lighting photography–beta –ar 2:3 –beta –upbeta",
         key="Description_key",
@@ -78,10 +64,10 @@ if app_mode == "Image Generation":
         n_iter = st.number_input("iterations", value=3, step=1, key="iterations_key")
 
     run = st.button("Generate")
-    if run and desc:
+    if run and Prompt:
         # make request body and send it
         payload = {
-            "name": desc,
+            "name": Prompt,
             "w": w,
             "h": h,
             "samples": samples,
@@ -89,16 +75,29 @@ if app_mode == "Image Generation":
             "seed": s,
         }
         with st.spinner("Generating ..."):
+            start = time.time()
             res = requests.post(
                 f"http://{port_config.model_ports.stablediff2[-1]}:8505/txt2img",
                 data=json.dumps(payload),
             )
+            end = time.time()
         try:
             response = res.json()
             zip_path = response["response"]["path"]
             grid_path = response["response"]["grid_path"]
             st.success('Successful!')
             st.image(Image.open(response["response"]["image"]))
+
+            payload = {
+                    "req_type": "Stable Diffusion version2 - txt2img",
+                    "prompt": Prompt,
+                    "runtime": (end - start)
+                    }
+
+            db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
             # enable user to download generated images
             with open(zip_path + ".zip", "rb") as file:
                 btn = st.download_button(
@@ -117,6 +116,7 @@ if app_mode == "Image Generation":
 
         
 # image to image
+
 elif app_mode == "Image Modification":
     st.markdown("# Stable Diffusion Version 2 - Image Modification")
     # upload input image
@@ -136,7 +136,7 @@ elif app_mode == "Image Modification":
             )
     if uploaded_file:
         # get the prompt and configuration from user
-        desc = st.text_input(
+        prompt = st.text_input(
             "Prompt",
             value=" A boat is sailing in a fictional ocean in front of mountains.",
             key="Description_key",
@@ -160,28 +160,40 @@ elif app_mode == "Image Modification":
             )
 
         run = st.button("Generate")
-        if desc and run:
+        if prompt and run:
             #make request body and send it
             files = {"files": uploaded_file.getvalue()}
-            payload = payload = {
-                "name": desc,
+            payload = {
+                "name": prompt,
                 "samples": samples,
                 "n_iter": n_iter,
                 "seed": s,
                 "strength": strng,
             }
             with st.spinner("Generating ..."):
+                start = time.time()
                 res = requests.post(
                     f"http://{port_config.model_ports.stablediff2[-1]}:8505/img2img",
                     params=payload,
                     files=files,
                 )
+                end = time.time()
             try:
                 # get the respons includes paths to generated images
                 response = res.json()
                 zip_path = response["response"]["path"]
                 grid_path = response["response"]["grid_path"]
                 st.success('Successful!')
+                payload = {
+                    "req_type": "Stable Diffusion version2 - img2img",
+                    "prompt":prompt,
+                    "runtime": (end - start)
+                    }
+
+                db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
                 st.image(Image.open(response["response"]["image"]))
                 # enable user to download generated images 
                 with open(zip_path + ".zip", "rb") as file:
@@ -198,6 +210,7 @@ elif app_mode == "Image Modification":
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
             except json.decoder.JSONDecodeError: 
                 st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+
 elif app_mode == "Upscaling":
     st.markdown("# Stable Diffusion Version 2 - Image Up Scaling")
     uploaded_file = st.file_uploader(
@@ -217,7 +230,7 @@ elif app_mode == "Upscaling":
         prompt = st.text_input("Prompt", "a high quality professional photograph")
         c1, c2 = st.columns([1, 1], gap="small")
         with c1:
-            seed = st.number_input("Seed", min_value=42, max_value=1000000, value=0)
+            seed = st.number_input("Seed", min_value=1, max_value=1000000, value=42)
         with c2:
             num_samples = st.number_input(
             "Number of Samples", min_value=1, max_value=64, value=1
@@ -244,16 +257,27 @@ elif app_mode == "Upscaling":
                 "eta": eta,
             }
             with st.spinner("Generating ..."):
+                start = time.time()
                 res = requests.post(
                     f"http://{port_config.model_ports.stablediff2[-1]}:8505/upscale",
                     params=payload,
                     files=files,
                 )
+                end = time.time()
             try:
                 response = res.json()
             # get the response back that includes path to generated image
                 zip_path = response["response"]["image"]
                 st.success('Successful!')
+                payload = {
+                    "req_type": "Stable Diffusion version2 - upscaling",
+                    "prompt": prompt,
+                    "runtime": (end - start)
+                    }
+                db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
                 filename_list = glob(os.path.join(zip_path, "*.png"))
                 for filename in filename_list:
                     im = Image.open(filename)
