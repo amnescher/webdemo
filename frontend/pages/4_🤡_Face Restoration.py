@@ -10,25 +10,31 @@ import base64
 from glob import glob
 from omegaconf import OmegaConf
 import datetime
-import pandas as pd
-from pandas import json_normalize 
 import time
 
 port_config = OmegaConf.load("/home/storage/config.yaml")
 st.sidebar.header("Select a demo")
+
 app_mode = st.sidebar.selectbox(
     "Options",
     ["Info", "Face Restoration"],
 )
-requests.post(f"http://{port_config.model_ports.db[-1]}:8509/initdb")
+
 if app_mode == "Info":
     st.markdown("# Face Restoration")
     st.write(
         """ ### 
 """
     )
-    st.markdown("# Face Restoration")
-    st.markdown("# Face Restoration")
+    st.write(
+        """ ### Why Face Restoration?
+
+Face images are always one of the most popular types of images in our daily life, which record 
+long-lasting precious memories and provide crucial information for identity analysis. Unfortunately, due to the limited conditions in the acquisition, storage and transmission devices, the degradations of face images are still ubiquitous in most real-world applications. The degraded face images not only impede human visual perception but also degrade face-related applications such as video surveillance and face recognition. This challenge motivates the restoration of high-quality (HQ) face images from the low-quality (LQ) face inputs which contain unknown degradations 
+(e.g., blur, noise, compression), known as blind face restoration (BFR).
+"""
+    )
+if app_mode == "Face Restoration":
     # upload input image
     uploaded_file = st.file_uploader(
         "Upload a image",
@@ -72,22 +78,14 @@ if app_mode == "Info":
                 db_req = requests.post(
                         f"http://{port_config.model_ports.db[-1]}:8509/insert",
                         data=json.dumps(payload),
-                    )
-
-                db_req = requests.post(
-                        f"http://{port_config.model_ports.db[-1]}:8509/widgets",
-                        data=json.dumps(payload),
-                    )
-                db_req = db_req.json()
-                df = pd.DataFrame.from_records(db_req["data"])
-                
+                    )                
                 st.image(Image.open(image_path))
                 cmp_list = glob(os.path.join(cmp_path, "*.png"))
                 st.info("Left: Before face restoration.    Right: After face restoration.", icon="ℹ️")
                 for filename in cmp_list:
                      im = Image.open(filename)
                      st.image(im)
-                st.table(df)
+                
                 with open(result_path + ".zip", "rb") as file:
                     btn = st.download_button(
                         label="Download Results",
