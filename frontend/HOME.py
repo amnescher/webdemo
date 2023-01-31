@@ -15,8 +15,12 @@ port_config = OmegaConf.load("/home/storage/config.yaml")
 # Page title
 st.write("# ESCERCLOUD AI Computer Vision Services - Demo! 👋")
 # Page description
+db_req = requests.post(
+                            f"http://{port_config.model_ports.db[-1]}:8509/initdb"
+                        )
 
 st.sidebar.success("Select a demo above.")
+
 app_mode = st.sidebar.selectbox(
     "Options",
     ["Info", "History"],

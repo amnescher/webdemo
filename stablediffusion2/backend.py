@@ -8,6 +8,10 @@ from fastapi import FastAPI, Query
 from utils import diff_model
 import PIL.Image as Image
 import uuid
+import traceback
+from omegaconf import OmegaConf
+import requests
+import json
 
 class txt2img_req(BaseModel):
     name: str
@@ -68,12 +72,16 @@ def submit(req: superresolution_req = Depends(), files: UploadFile = File(...)):
     uploaded_image = Image.open(files.file)
     image_path= name = f"/home/storage/test_image/{str(uuid.uuid4())}.jpg"
     uploaded_image.save(image_path)
+    port_config = OmegaConf.load("/home/storage/config.yaml")
+    
     image_path = diff_model(request["prompt"],"upscaling",image_path = image_path,
     seed_num=request["seed"],
     num_samples=request["samples"],
     steps=request["steps"],
     eta = request["eta"],
     scale =request["scale"] )
+    
+    
 
 
     return {"response":{"image":image_path}}

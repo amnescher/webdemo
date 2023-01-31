@@ -57,7 +57,7 @@ def db_init():
     cursor = mydb.cursor()
 
     #cursor.execute("DROP TABLE IF EXISTS widgets")
-    cursor.execute("CREATE TABLE IF NOT EXISTS widgets (request VARCHAR(200), prompt VARCHAR(200), datetime DATETIME(6), runtime FLOAT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS widgets (request VARCHAR(200), prompt VARCHAR(200), datetime DATETIME(6), runtime FLOAT, error VARCHAR(2500))")
     cursor.close()
 
     return 'init database'
@@ -66,6 +66,7 @@ class req_info(BaseModel):
     req_type: str
     prompt: Optional[str] = None
     runtime: Optional[float] = None
+    error: Optional[str] = None
 
 @app.post('/insert')   
 def get_widgets(API_req: req_info):
@@ -78,7 +79,7 @@ def get_widgets(API_req: req_info):
     
     cursor = mydb.cursor()
     now = datetime.utcnow()
-    cursor.execute("INSERT INTO widgets VALUE (%s, %s, %s, %s)",(API_req.req_type, API_req.prompt, now.strftime('%Y-%m-%d %H:%M:%S'), API_req.runtime ))
+    cursor.execute("INSERT INTO widgets VALUE (%s, %s, %s, %s, %s)",(API_req.req_type, API_req.prompt, now.strftime('%Y-%m-%d %H:%M:%S'), API_req.runtime, API_req.error))
     mydb.commit()
 
     return 

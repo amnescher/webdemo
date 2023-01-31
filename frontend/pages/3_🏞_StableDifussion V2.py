@@ -10,8 +10,9 @@ import base64
 from glob import glob
 from omegaconf import OmegaConf
 import time 
-
-
+import traceback
+import sys
+from streamlit_drawable_canvas import st_canvas
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 #Read port config file
 port_config = OmegaConf.load("/home/storage/config.yaml")
@@ -19,7 +20,7 @@ port_config = OmegaConf.load("/home/storage/config.yaml")
 st.sidebar.header("Select a demo")
 app_mode = st.sidebar.selectbox(
     "Options",
-    ["Info", "Image Generation", "Image Modification", "Upscaling"],
+    ["Info", "Image Generation", "Image Modification", "Upscaling","Inpainting"],
 )
 if app_mode == "Info":
     st.markdown("# Stable Diffusion Version 2")
@@ -124,7 +125,11 @@ elif app_mode == "Image Modification":
         "Upload a image: image should be larger than 256x256",
         type=["jpg", "jpeg", "png"],
     )
+    
     if uploaded_file:
+        image = Image.open(uploaded_file)
+        w, h = image.size
+        st.info(f"Loaded input image of size ({w}, {h})", icon="ℹ️")
         st.image(uploaded_file)
         #check if image size is not smaller than 256*256
         image = Image.open(uploaded_file)
@@ -138,17 +143,16 @@ elif app_mode == "Image Modification":
         # get the prompt and configuration from user
         prompt = st.text_input(
             "Prompt",
-            value=" A boat is sailing in a fictional ocean in front of mountains.",
+            value=" painting, Van Gogh style, high quality, close shot, blue flowers, summer time.",
             key="Description_key",
         )
         c1, c2, c3, c4 = st.columns([1, 1, 1, 1], gap="small")
         with c1:
             strng = st.number_input(
                 "Strength (0,1):",
-                value=0.8,
-                step=0.01,
+                min_value=0.0, max_value=1.0, value=0.8, step=0.01,
                 format="%.2f",
-                key=str(uuid.uuid4()),
+                key="Strength_key",
             )
         with c2:
             s = st.number_input("Seed", value=42, step=1, key="Seed_key")
@@ -292,7 +296,54 @@ elif app_mode == "Upscaling":
                 # delete generated images and directories
                 shutil.rmtree(zip_path)
                 os.remove(zip_path + ".zip")
-            except NameError:
+            except Exception:
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
-            except json.decoder.JSONDecodeError: 
-                st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+
+elif app_mode == "Inpainting":
+
+    st.title("Stable Diffusion Inpainting")
+
+    image = st.file_uploader("Image", ["jpg", "jpeg", "png"])
+    if image:
+        image = Image.open(image)
+        w, h = image.size
+        st.info(f"Loaded input image of size ({w}, {h})", icon="ℹ️")
+        width, height = map(lambda x: x - x % 64, (w, h))  # resize to integer multiple of 32
+        #image = image.resize((width, height))
+
+        prompt = st.text_input("Prompt")
+
+        seed = st.number_input("Seed", min_value=0, max_value=1000000, value=0)
+        num_samples = st.number_input("Number of Samples", min_value=1, max_value=64, value=1)
+        scale = st.slider("Scale", min_value=0.1, max_value=30.0, value=10., step=0.1)
+        ddim_steps = st.slider("DDIM Steps", min_value=0, max_value=50, value=50, step=1)
+        eta = st.number_input("eta (DDIM)", value=0., min_value=0., max_value=1.)
+        stroke_width = st.slider("Stroke width: ", 1, 25, 3)
+        
+        fill_color = "rgba(255, 255, 255, 0.0)"
+        stroke_color = "rgba(255, 255, 255, 1.0)"
+        bg_color = "rgba(0, 0, 0, 1.0)"
+        drawing_mode = "freedraw"
+
+        st.write("Canvas")
+        st.caption(
+            "Draw a mask to inpaint, then click the 'Send to Streamlit' button (bottom left, with an arrow on it).")
+        canvas_result = st_canvas(
+            fill_color=fill_color,
+            stroke_width=stroke_width,
+            stroke_color=stroke_color,
+            background_color=bg_color,
+            background_image=image,
+            update_streamlit=False,
+            height=height,
+            width=width,
+            drawing_mode=drawing_mode,
+            key="canvas",
+        )
+        if canvas_result:
+            mask = canvas_result.image_data
+            mask = mask[:, :, -1] > 0
+            if mask.sum() > 0:
+                mask = Image.fromarray(mask)
+                st.write("Inpainted")
+

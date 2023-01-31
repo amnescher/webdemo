@@ -14,7 +14,11 @@ from scripts.txt2img import put_watermark
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.ddpm import LatentUpscaleDiffusion, LatentUpscaleFinetuneDiffusion
 from ldm.util import exists, instantiate_from_config
-
+from omegaconf import OmegaConf
+import time 
+import traceback
+import requests
+import json 
 
 torch.set_grad_enabled(False)
 
@@ -135,8 +139,9 @@ def inference(image, prompt,seed,scale,steps,eta,num_samples):
         t_progress.progress(min((t + 1) / steps, 1.))
 
     sampler.make_schedule(steps, ddim_eta=eta, verbose=True)
-    
-    result = paint(
+    port_config = OmegaConf.load("/home/storage/config.yaml")
+    try:
+        result = paint(
             sampler=sampler,
             image=image,
             prompt=prompt,
@@ -148,6 +153,16 @@ def inference(image, prompt,seed,scale,steps,eta,num_samples):
             noise_level=noise_level,
             eta=eta
         )
+    except Exception:
+                payload = {
+                    "req_type": "Stable Diffusion version2 - upscaling",
+                    "error": traceback.format_exc()
+                    }
+                db_req = requests.post(
+                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                data=json.dumps(payload),
+            )
+
     outpath = "/home/storage/diff2/upscale/"
     sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed))
     os.makedirs(sample_path, exist_ok=True)

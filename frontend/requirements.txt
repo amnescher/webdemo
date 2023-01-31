@@ -9,3 +9,6 @@ OmegaConf
 streamlit-authenticator
 mysql-connector-python
 pandas
+streamlit-drawable-canvas==0.9.0
+svgpathtools
+svgwrite
