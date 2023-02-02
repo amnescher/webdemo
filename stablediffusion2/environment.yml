@@ -20,7 +20,6 @@ dependencies:
   - cuda-nvrtc=11.7.99=0
   - cuda-nvtx=11.7.91=0
   - cudatoolkit=11.3.1=h2bc3f7f_2
-  - ffmpeg=4.3=hf484d3e_0
   - filelock=3.9.0=py39h06a4308_0
   - flit-core=3.6.0=pyhd3eb1b0_0
   - freetype=2.12.1=h4a9f257_0
@@ -210,7 +209,6 @@ dependencies:
       - wcwidth==0.2.5
       - webdataset==0.2.5
       - werkzeug==2.2.2
-      - xformers==0.0.16
       - yarl==1.8.2
       - zipp==3.11.0
 prefix: /opt/conda/envs/myenv

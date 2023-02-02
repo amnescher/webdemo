@@ -15,18 +15,15 @@ RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 && \
 ENV home /opt/conda
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda 
-
 # Put conda in path so we can use conda activate
 ADD .  .
 ENV PATH=$home/bin:$PATH
 RUN conda update -n base -c defaults conda &&\
     conda env create -f  environment.yml
-
 SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
-
 RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
-
+RUN  pip3 install numpy --pre torch --force-reinstall --index-url https://download.pytorch.org/whl/nightly/cu117
 
 #EXPOSE 8505
 #ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "myenv", "python", "backend.py"]
