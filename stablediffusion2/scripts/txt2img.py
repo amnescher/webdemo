@@ -18,6 +18,8 @@ from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from ldm.models.diffusion.dpm_solver import DPMSolverSampler
 import uuid
+import time
+
 
 torch.set_grad_enabled(False)
 
@@ -185,11 +187,14 @@ def put_watermark(img, wm_encoder=None):
     return img
 
 
-def main(opt):
+def main(opt,model, config):
     seed_everything(opt.seed)
-
-    config = OmegaConf.load(f"{opt.config}")
-    model = load_model_from_config(config, f"{opt.ckpt}")
+    if config == None or  model == None:
+        config = OmegaConf.load(f"{opt.config}")
+        model= load_model_from_config(config, f"{opt.ckpt}")
+    else: 
+        config = config 
+        model=model 
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
@@ -237,7 +242,7 @@ def main(opt):
     start_code = None
     if opt.fixed_code:
         start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
-
+    start = time.time()
     precision_scope = autocast if opt.precision == "autocast" else nullcontext
     with torch.no_grad(), \
         precision_scope("cuda"), \
@@ -289,10 +294,12 @@ def main(opt):
 
     print(f"Your samples are ready and waiting for you here: \n{sample_path} \n"
           f" \nEnjoy.")
+    end = time.time()
+    print("-----------Time **************----------->",end-start)
     return sample_path, grid_path
     
 
-def txt2img_infer(input_prompt,input_plms=True,dim = (512,512),seed_num = 42,n_samples= 3, n_iter = 3):
+def txt2img_infer(input_prompt,model=None,config=None,input_plms=True,dim = (512,512),seed_num = 42,n_samples= 3, n_iter = 3):
     opt = parse_args()
     opt.prompt = input_prompt
     opt.H = dim[0]
@@ -301,4 +308,4 @@ def txt2img_infer(input_prompt,input_plms=True,dim = (512,512),seed_num = 42,n_s
     opt.seed = seed_num
     opt.n_iter = n_iter
     opt.config = "configs/stable-diffusion/v2-inference-v.yaml"
-    return main(opt)
+    return main(opt,model, config)

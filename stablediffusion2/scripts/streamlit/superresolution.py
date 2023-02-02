@@ -119,10 +119,13 @@ def paint(sampler, image, prompt, seed, scale, h, w, steps, num_samples=1, callb
     return [put_watermark(Image.fromarray(img.astype(np.uint8)), wm_encoder) for img in result]
 
 
-def inference(image, prompt,seed,scale,steps,eta,num_samples):
+def inference(image, prompt,seed,scale,steps,eta,num_samples,sampler=None):
     st.title("Stable Diffusion Upscaling")
     # run via streamlit run scripts/demo/depth2img.py <path-tp-config> <path-to-ckpt>
-    sampler = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "storage/model_weights/diff2/x4-upscaler-ema.ckpt")
+    if sampler == None:
+        sampler = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "storage/model_weights/diff2/x4-upscaler-ema.ckpt")
+    else:
+        sampler = sampler
     image = Image.open(image)
     w, h = image.size
     width, height = map(lambda x: x - x % 64, (w, h))  # resize to integer multiple of 64

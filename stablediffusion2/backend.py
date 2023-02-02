@@ -12,7 +12,12 @@ import traceback
 from omegaconf import OmegaConf
 import requests
 import json
+import torch 
+from utils import load_model
 
+
+model_v2, config_v2 = load_model(model="txt2img")
+model_v2_up, _ = load_model(model="upscaling")
 class txt2img_req(BaseModel):
     name: str
     w: int
@@ -29,7 +34,7 @@ def read_root():
 
 @app.post("/txt2img")
 def read_items(API_req: txt2img_req):
-    image_path, path, grid_path = diff_model(API_req.name,"txt2img",strength=0.8,
+    image_path, path, grid_path = diff_model(API_req.name,"txt2img",model=model_v2,config=config_v2,strength=0.8,
     dim=(API_req.h, API_req.w),
     seed_num=API_req.seed,
     num_samples=API_req.samples,
@@ -51,7 +56,7 @@ def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
     uploaded_image = Image.open(files.file)
     image_path = name = f"/home/storage/test_image/{str(uuid.uuid4())}.jpg"
     uploaded_image.save(image_path)
-    image_path, path, grid_path = diff_model(request["name"],"img2img",image_path = image_path ,strength=request["strength"],
+    image_path, path, grid_path = diff_model(request["name"],"img2img",model=model_v2,config=config_v2,image_path = image_path ,strength=request["strength"],
     seed_num=request["seed"],
     num_samples=request["samples"],
     n_iter=request["n_iter"])
@@ -74,7 +79,7 @@ def submit(req: superresolution_req = Depends(), files: UploadFile = File(...)):
     uploaded_image.save(image_path)
     port_config = OmegaConf.load("/home/storage/config.yaml")
     
-    image_path = diff_model(request["prompt"],"upscaling",image_path = image_path,
+    image_path = diff_model(request["prompt"],"upscaling",model=model_v2_up,config=None,image_path = image_path,
     seed_num=request["seed"],
     num_samples=request["samples"],
     steps=request["steps"],

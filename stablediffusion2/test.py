@@ -1,29 +1,28 @@
 import uvicorn
 from fastapi import File,Form
 from fastapi import UploadFile,Depends
-# import config
-# from typing import List, Union,Optional
-#from pydantic import BaseModel
+import config
+from typing import List, Union,Optional
+from pydantic import BaseModel
 from fastapi import FastAPI, Query
-#from utils import diff_model
-#import PIL.Image as Image
-# import uuid
+from utils import diff_model
+import PIL.Image as Image
+import uuid
+import traceback
+from omegaconf import OmegaConf
+import requests
+import json
+import time
+import torch 
+from ldm.util import instantiate_from_config
+
+from utils import load_model
 
 
-# class txt2img_req(BaseModel):
-#     name: str
-#     w: int
-#     h: int
-#     samples: int
-#     n_iter: int
-#     seed:int
-app = FastAPI()
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome from the API"}
-
-
-if __name__ == "__main__":
-    uvicorn.run("test:app", host="0.0.0.0", port=8505)   
-print("*****************TEST******************")
+model_v2, config_v2 = load_model(model="txt2img")
+#model_v2, _ = load_model(model="upscaling")
+start = time.time()
+image_path, path, grid_path = diff_model("Animal","txt2img",model=model,config=config,strength=0.8,num_samples=1,n_iter=2)
+image_path, path, grid_path = diff_model("Animal","txt2img",model=model,config=config,strength=0.8,num_samples=1,n_iter=2)
+end = time.time()
+print("-----------Time----------->",end-start)

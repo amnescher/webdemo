@@ -58,7 +58,7 @@ def load_img(path):
     return 2. * image - 1.
 
 
-def img2img_infer(input_image,input_prompt="a painting of a virus monster playing guitar",input_strength = 0.8,seed_num = 42,n_samples= 2, n_iter = 1):
+def img2img_infer(input_image,input_prompt="a painting of a virus monster playing guitar",model = None,config=None, input_strength = 0.8,seed_num = 42,n_samples= 2, n_iter = 1):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -185,8 +185,15 @@ def img2img_infer(input_image,input_prompt="a painting of a virus monster playin
     opt = parser.parse_args()
     seed_everything(seed_num)
 
-    config = OmegaConf.load(f"{opt.config}")
-    model = load_model_from_config(config, f"{opt.ckpt}")
+
+
+    if config == None or  model == None:
+        config = OmegaConf.load(f"{opt.config}")
+        model= load_model_from_config(config, f"{opt.ckpt}")
+    else: 
+        config = config 
+        model=model 
+
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
