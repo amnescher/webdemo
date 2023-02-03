@@ -14,7 +14,6 @@ import requests
 import json
 import time
 import torch 
-from ldm.util import instantiate_from_config
 
 from utils import load_model
 
@@ -22,6 +21,7 @@ from utils import load_model
 model_v2, config_v2 = load_model(model="txt2img")
 #model_v2, _ = load_model(model="upscaling")
 start = time.time()
+image_path, path, grid_path = diff_model("Animal","txt2img",model=model_v2,config=config_v2,strength=0.8,num_samples=1,n_iter=1)
 image_path, path, grid_path = diff_model("Animal","txt2img",model=model_v2,config=config_v2,strength=0.8,num_samples=1,n_iter=1)
 image_path, path, grid_path = diff_model("Animal","txt2img",model=model_v2,config=config_v2,strength=0.8,num_samples=1,n_iter=1)
 end = time.time()

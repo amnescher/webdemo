@@ -242,7 +242,6 @@ def main(opt,model, config):
     start_code = None
     if opt.fixed_code:
         start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
-    start = time.time()
     precision_scope = autocast if opt.precision == "autocast" else nullcontext
     with torch.no_grad(), \
         precision_scope("cuda"), \
@@ -294,8 +293,7 @@ def main(opt,model, config):
 
     print(f"Your samples are ready and waiting for you here: \n{sample_path} \n"
           f" \nEnjoy.")
-    end = time.time()
-    print("-----------Time **************----------->",end-start)
+    
     return sample_path, grid_path
     
 

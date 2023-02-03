@@ -91,7 +91,6 @@ def load_model(model=None):
     if model == "txt2img":
         config = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")
         model = load_model_from_config(config, "storage/model_weights/diff2/model_v2_768.ckpt")
-        model = torch.compile(model)
         return model, config
     elif model == "upscaling":
         model = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "storage/model_weights/diff2/x4-upscaler-ema.ckpt")

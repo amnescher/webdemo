@@ -97,7 +97,7 @@ def check_safety(x_image):
     return x_checked_image, has_nsfw_concept
 
 
-def txt2img_infer(input_prompt,input_plms=True,dim = (512,512),seed_num = 42,n_samples= 3, n_iter = 2):
+def txt2img_infer(input_prompt, model=None, config=None, input_plms=True,dim = (512,512),seed_num = 42,n_samples= 3, n_iter = 2):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -238,9 +238,12 @@ def txt2img_infer(input_prompt,input_plms=True,dim = (512,512),seed_num = 42,n_s
         opt.outdir = "outputs/txt2img-samples-laion400m"
 
     seed_everything(seed_num)
-
-    config = OmegaConf.load(f"{opt.config}")
-    model = load_model_from_config(config, f"{opt.ckpt}")
+    if config == None or  model == None:
+        config = OmegaConf.load(f"{opt.config}")
+        model= load_model_from_config(config, f"{opt.ckpt}")
+    else: 
+        config = config 
+        model=model
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)

@@ -23,7 +23,6 @@ RUN conda update -n base -c defaults conda &&\
 SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
 RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
-RUN  pip3 install numpy --pre torch --force-reinstall --index-url https://download.pytorch.org/whl/nightly/cu117
 
 #EXPOSE 8505
 #ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "myenv", "python", "backend.py"]
