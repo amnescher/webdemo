@@ -10,8 +10,9 @@ from utils import load_model
 from omegaconf import OmegaConf
 import requests
 
+# read configuration file includes port informations
 port_config = OmegaConf.load("/home/storage/config.yaml")
-
+# initialise database to store requrests
 try:
         requests.post(
                                 f"http://{port_config.model_ports.db[-1]}:8509/initdb"
@@ -19,6 +20,7 @@ try:
 except:
         print("database initialization failed")
 
+#load model weights into GPU mem 
 model_v1, config_v1 = load_model()
 
 class txt2img_req(BaseModel):

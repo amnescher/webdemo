@@ -132,6 +132,7 @@ dmypy.json
 .ipynb_checkpoints
 .ckpt
 .pth
+/storage/*
 /storage/diff1/img2img/*
 /storage/diff1/txt2img/*
 /storage/diff2/img2img/*
