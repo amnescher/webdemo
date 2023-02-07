@@ -12,6 +12,10 @@ import uuid
 import torch 
 from ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
+from minio import Minio
+from minio.error import S3Error
+from dotenv import load_dotenv
+
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -33,8 +37,23 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 def load_model():
+        #connect to minio bucket
+        load_dotenv("storage/env.env")
+
+        access_key = os.environ.get('access_key')
+        secret_key = os.environ.get('secret_key')
+        
+        client = Minio(
+        "minio:9000",
+        access_key=access_key,
+        secret_key=secret_key,secure=False
+    )
+        found = client.bucket_exists("modelweight")
+
+        print("Downloading model from MinIO bucket")
+        client.fget_object("modelweight", "storage/model_weights/diff1/model_v1.ckpt", "model_weight")
         config = OmegaConf.load("configs/stable-diffusion/v1-inference.yaml")
-        model = load_model_from_config(config, "storage/model_weights/diff1/model_v1.ckpt")
+        model = load_model_from_config(config, "model_weight")
         return model, config
 
 def diff_model(

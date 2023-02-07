@@ -11,14 +11,10 @@ import json
 image_id = Image.open("/home/storage/frontend/id.png")
 image_stablediff = Image.open("/home/storage/frontend/butterfly.jpeg")
 image_faceResto = Image.open("/home/storage/frontend/faceresto.jpeg")
-port_config = OmegaConf.load("/home/storage/config.yaml")
+
 # Page title
 st.write("# ESCERCLOUD AI Computer Vision Services - Demo! 👋")
 # Page description
-db_req = requests.post(
-                            f"http://{port_config.model_ports.db[-1]}:8509/initdb"
-                        )
-
 st.sidebar.success("Select a demo above.")
 
 app_mode = st.sidebar.selectbox(

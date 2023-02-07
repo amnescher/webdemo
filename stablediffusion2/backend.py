@@ -14,10 +14,21 @@ import requests
 import json
 import torch 
 from utils import load_model
+from omegaconf import OmegaConf
+import requests
+
+port_config = OmegaConf.load("/home/storage/config.yaml")
+
+try:
+        requests.post(
+                                f"http://{port_config.model_ports.db[-1]}:8509/initdb"
+                            )
+except:
+        print("database initialization failed")
+
+model_v2, config_v2, model_v2_up = load_model()
 
 
-model_v2, config_v2 = load_model(model="txt2img")
-model_v2_up, _ = load_model(model="upscaling")
 class txt2img_req(BaseModel):
     name: str
     w: int

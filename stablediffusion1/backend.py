@@ -7,10 +7,19 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Query
 from utils import diff_model
 from utils import load_model
+from omegaconf import OmegaConf
+import requests
 
+port_config = OmegaConf.load("/home/storage/config.yaml")
+
+try:
+        requests.post(
+                                f"http://{port_config.model_ports.db[-1]}:8509/initdb"
+                            )
+except:
+        print("database initialization failed")
 
 model_v1, config_v1 = load_model()
-
 
 class txt2img_req(BaseModel):
     name: str
@@ -57,8 +66,5 @@ def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
     return {"response":{"image":image_path,"path":path,"grid_path":grid_path}}
     
 
-
-    
-    
 if __name__ == "__main__":
     uvicorn.run("backend:app", host="0.0.0.0", port=8504)

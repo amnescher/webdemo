@@ -10,12 +10,13 @@ services:
       volumes:
           - ./storage:/home/storage
       depends_on:
-        - backend_stable_v1_1
-        - donut_1
-        - backend_stable_v2_1
-        - gfpgan_1
-        - appsqldb
-        - req_db
+       - backend_stable_v1_1
+       - donut_1
+       - backend_stable_v2_1
+       - gfpgan_1
+       - appsqldb
+       - req_db
+       - minio
   backend_stable_v1_1:
     build: 
       context: stablediffusion1
@@ -99,8 +100,16 @@ services:
     command: python3 backend.py
     ports:
       - 8509:8509
+      - "9003:9003"
     volumes:
       - ./storage/:/home/storage
+
+  minio_test:
+    build:
+      context: mintest
+      network: host
+    command: python test.py
+
   appsqldb:
     image: mysql
     ports:
@@ -110,6 +119,15 @@ services:
     volumes:
     - mysql:/var/lib/mysql
     - mysql_config:/etc/mysql
+  minio:
+    image: minio/minio
+    ports:
+      - "9001:9001"
+      - "9000:9000" 
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server --console-address ":9001" /data
 volumes:
   mysql:
   mysql_config:

@@ -8,21 +8,20 @@ RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 && \
     apt-get -y install git &&\
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update
+RUN apt-get install ffmpeg libsm6 libxext6  -y
 # Install miniconda
-ADD .  /home/
 ENV home /opt/conda
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda 
 
 # Put conda in path so we can use conda activate
+WORKDIR /home
+ADD .  .
 ENV PATH=$home/bin:$PATH
 RUN conda update -n base -c defaults conda &&\
     conda env create -f  /home/environment.yaml 
-SHELL ["conda", "run", "-n", "ldm", "/bin/bash", "-c"]
-WORKDIR /home
-RUN apt-get update
-RUN apt-get install ffmpeg libsm6 libxext6  -y
-EXPOSE 8504
+#SHELL ["conda", "run", "-n", "ldm", "/bin/bash", "-c"]
+#EXPOSE 8504
 #ENTRYPOINT ["conda", "run", "-n", "ldm", "python3", "backend.py"]
 #ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "ldm", "python", "backend.py"]

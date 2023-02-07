@@ -1,5 +1,5 @@
 FROM nvidia/cuda:11.3.1-devel-ubuntu20.04
-ADD .  /home
+
 RUN apt-get update
 RUN apt install  -y python3-pip
 ENV TZ Europe/London
@@ -12,6 +12,7 @@ RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 && \
 
 # Put conda in path so we can use conda activate
 WORKDIR /home
+ADD .  .
 RUN pip install -r requirements.txt
 #EXPOSE 8503
 #CMD ["python3", "main.py"]

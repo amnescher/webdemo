@@ -9,7 +9,9 @@ from omegaconf import OmegaConf
 import torch 
 from ldm.util import instantiate_from_config
 from scripts.streamlit.superresolution import initialize_model
-
+from minio import Minio
+from minio.error import S3Error
+from dotenv import load_dotenv
 
 
 def diff_model(
@@ -87,14 +89,29 @@ def load_model_from_config(config, ckpt, verbose=False):
     model.eval()
     return model
 
-def load_model(model=None):
-    if model == "txt2img":
-        config = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")
-        model = load_model_from_config(config, "storage/model_weights/diff2/model_v2_768.ckpt")
-        return model, config
-    elif model == "upscaling":
-        model = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "storage/model_weights/diff2/x4-upscaler-ema.ckpt")
-        return model, None
+def load_model():
+
+    #connect to minio bucket
+    load_dotenv("storage/env.env")
+    access_key = os.environ.get('access_key')
+    secret_key = os.environ.get('secret_key')
+
+    client = Minio(
+        "minio:9000",
+        access_key=access_key,
+        secret_key=secret_key,secure=False
+    )
+    
+    print("uploading model weights from MinIO bucket")
+    client.fget_object("modelweight", "storage/model_weights/diff2/model_v2_768.ckpt", "model_weight_gen")
+    client.fget_object("modelweight", "storage/model_weights/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
+    print("model successfully downloaded!")
+
+    config_gen = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")
+    model_gen = load_model_from_config(config_gen, "model_weight_gen")
+    model_upScale = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "model_weight_scaling")
+    
+    return model_gen, config_gen,model_upScale
     
 
 

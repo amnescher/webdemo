@@ -186,5 +186,7 @@ dependencies:
       - yarl==1.8.2
       - xformers==0.0.17.dev435
       - zipp==3.11.0
+      - python-dotenv
+      - minio
       
 prefix: /opt/conda/envs/myenv
