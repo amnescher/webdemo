@@ -15,7 +15,7 @@ import json
 import time
 import torch 
 
-from utils import load_model
+from utils import load_model, load_config_port
 
 
-load_model()
+load_config_port()

@@ -13,11 +13,13 @@ from omegaconf import OmegaConf
 import requests
 import json
 import torch 
-from utils import load_model
+from utils import load_config_port,load_model
 from omegaconf import OmegaConf
 import requests
-
-port_config = OmegaConf.load("/home/storage/config.yaml")
+import numpy as np
+import os
+model_v2, config_v2, model_v2_up,model_v2_paint = load_model()
+port_config = load_config_port()
 
 try:
         requests.post(
@@ -26,7 +28,6 @@ try:
 except:
         print("database initialization failed")
 
-model_v2, config_v2, model_v2_up = load_model()
 
 
 class txt2img_req(BaseModel):
@@ -65,8 +66,8 @@ class img2img_req(BaseModel):
 def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
     request = req.dict()
     uploaded_image = Image.open(files.file)
-    image_path = name = f"/home/storage/test_image/{str(uuid.uuid4())}.jpg"
-    uploaded_image.save(image_path)
+    image_path = f"/prediction/{str(uuid.uuid4())}.jpg"
+    uploaded_image.convert('RGB').save(image_path)
     image_path, path, grid_path = diff_model(request["name"],"img2img",model=model_v2,config=config_v2,image_path = image_path ,strength=request["strength"],
     seed_num=request["seed"],
     num_samples=request["samples"],
@@ -86,23 +87,36 @@ class superresolution_req(BaseModel):
 def submit(req: superresolution_req = Depends(), files: UploadFile = File(...)):
     request = req.dict()
     uploaded_image = Image.open(files.file)
-    image_path= name = f"/home/storage/test_image/{str(uuid.uuid4())}.jpg"
-    uploaded_image.save(image_path)
-    port_config = OmegaConf.load("/home/storage/config.yaml")
-    
+    image_path = f"/prediction/{str(uuid.uuid4())}.jpg"
+    uploaded_image.convert('RGB').save(image_path)
     image_path = diff_model(request["prompt"],"upscaling",model=model_v2_up,config=None,image_path = image_path,
     seed_num=request["seed"],
     num_samples=request["samples"],
     steps=request["steps"],
     eta = request["eta"],
     scale =request["scale"] )
-    
-    
-
 
     return {"response":{"image":image_path}}
 
-    
-    
+
+
+@app.post("/Inpainting")
+def submit(req: superresolution_req = Depends(), files: List[UploadFile] = File(...)):
+    request = req.dict()
+    uploaded_image = Image.open(files[0].file)
+    mask = Image.open(files[1].file)    
+
+    input_image_path = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_image.jpg") 
+    uploaded_image.save(input_image_path)
+    image_path = diff_model(request["prompt"],"Inpainting",model=model_v2_paint,mask = mask,config=None,image_path = input_image_path,
+    seed_num=request["seed"],
+    num_samples=request["samples"],
+    steps=request["steps"],
+    eta = request["eta"],
+    scale =request["scale"])  
+    os.remove(input_image_path)
+
+    return {"response":{"image":image_path}}
+
 if __name__ == "__main__":
     uvicorn.run("backend:app", host="0.0.0.0", port=8505)

@@ -90,3 +90,6 @@ xxhash==3.1.0
 yarl==1.8.2
 zss==1.2.0
 sentencepiece
+python-dotenv
+minio
+omegaconf

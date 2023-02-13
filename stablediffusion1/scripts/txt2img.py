@@ -112,7 +112,7 @@ def txt2img_infer(input_prompt, model=None, config=None, input_plms=True,dim = (
         type=str,
         nargs="?",
         help="dir to write results to",
-        default="storage/diff1/txt2img/"
+        default="/prediction"
     )
     parser.add_argument(
         "--skip_grid",

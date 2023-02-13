@@ -20,7 +20,7 @@ WORKDIR /home
 ADD .  .
 ENV PATH=$home/bin:$PATH
 RUN conda update -n base -c defaults conda &&\
-    conda env create -f  /home/environment.yaml 
+    conda env create -f  environment.yaml 
 #SHELL ["conda", "run", "-n", "ldm", "/bin/bash", "-c"]
 #EXPOSE 8504
 #ENTRYPOINT ["conda", "run", "-n", "ldm", "python3", "backend.py"]

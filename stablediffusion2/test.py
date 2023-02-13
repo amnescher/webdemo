@@ -15,14 +15,29 @@ import json
 import time
 import torch 
 
-from utils import load_model
+from utils import load_model, diff_model
 
 
-model_v2, config_v2 = load_model(model="txt2img")
-#model_v2, _ = load_model(model="upscaling")
-# start = time.time()
-# image_path, path, grid_path = diff_model("Animal","txt2img",model=model_v2,config=config_v2,strength=0.8,num_samples=1,n_iter=1)
-# image_path, path, grid_path = diff_model("Animal","txt2img",model=model_v2,config=config_v2,strength=0.8,num_samples=1,n_iter=1)
-# image_path, path, grid_path = diff_model("Animal","txt2img",model=model_v2,config=config_v2,strength=0.8,num_samples=1,n_iter=1)
-# end = time.time()
-# print("-----------Time----------->",end-start)
+model_v2, config_v2, model_v2_up,model_v2_paint = load_model()
+mask = Image.open("/home/storage/painting/mask.png")    
+image_path = '/home/storage/painting/image.png'
+    #f"/prediction/{str(uuid.uuid4())}.jpg"
+    #uploaded_image.save(image_path)
+image_path = diff_model(
+    "red eyes",
+    "Inpainting",
+    model=model_v2_paint,
+    config = None,
+    image_path="/home/storage/painting/image.png",
+    mask = mask,
+    strength=0.8,
+    dim=(512, 512),
+    seed_num=42,
+    num_samples=3,
+    n_iter=2,
+    eta = 0,
+    scale =9,
+    steps = 50,
+) 
+
+

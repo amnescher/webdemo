@@ -7,10 +7,24 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Query
 from inference_gfpgan import inference
 import PIL.Image as Image
+from utils import load_config_port
 import uuid
 import os 
 import shutil 
 import glob 
+import requests
+
+
+port_config = load_config_port()
+
+try:
+        requests.post(
+                                f"http://{port_config.model_ports.db[-1]}:8509/initdb"
+                            )
+except:
+        print("database initialization failed")
+
+
 class RestorationFace(BaseModel):
     upscale: Optional[int] = None
     # bg_upsampler: str
@@ -27,7 +41,7 @@ def read_root():
 def submit(req: RestorationFace = Depends(), files: UploadFile = File(...)):
     request = req.dict()
     uploaded_image = Image.open(files.file)
-    image_path = name = f"/home/storage/test_image/{str(uuid.uuid4())}.jpg"
+    image_path = name = f"/prediction/{str(uuid.uuid4())}.jpg"
     uploaded_image.save(image_path)
     result_path, image_path = inference(image_path, upscale=request["upscale"])
     shutil.make_archive(result_path, "zip", result_path)

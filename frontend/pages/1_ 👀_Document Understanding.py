@@ -11,13 +11,31 @@ from glob import glob
 from omegaconf import OmegaConf
 import time
 
+from dotenv import load_dotenv
+from minio import Minio
+from minio.error import S3Error
+from omegaconf import OmegaConf
+
+def load_config_port():
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+    client = Minio(
+                    "minio:9000",
+                    access_key=access_key,
+                    secret_key=secret_key,secure=False
+                    )
+    # read configuration file includes port informations
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
+    return port
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/ocr.jpeg")
 
 st.sidebar.header("Select a demo")
 # load port configuration
-port_config = OmegaConf.load("/home/storage/config.yaml")
+port_config = load_config_port()
 app_mode = st.sidebar.selectbox(
     "Options",
     ["Info", "Document Parsing", "Document Visual Question Answering"],

@@ -6,12 +6,13 @@ from typing import List, Union,Optional
 from pydantic import BaseModel
 from fastapi import FastAPI, Query
 from utils import diff_model
-from utils import load_model
+from utils import load_model,load_config_port
 from omegaconf import OmegaConf
 import requests
 
-# read configuration file includes port informations
-port_config = OmegaConf.load("/home/storage/config.yaml")
+
+#load port names to send request to
+port_config = load_config_port() 
 # initialise database to store requrests
 try:
         requests.post(
@@ -30,6 +31,13 @@ class txt2img_req(BaseModel):
     samples: int
     n_iter: int
     seed:int
+
+class img2img_req(BaseModel):
+    name: str
+    samples: Optional[int] = None
+    n_iter: Optional[int] = None
+    seed:Optional[int] = None
+    strength: Optional[float] = None
 app = FastAPI()
 
 @app.get("/")
@@ -47,16 +55,6 @@ def read_items(API_req: txt2img_req):
 
     return {"response":{"image":image_path,"path":path,"grid_path":grid_path}}
   
-
-
-
-class img2img_req(BaseModel):
-    name: str
-    samples: Optional[int] = None
-    n_iter: Optional[int] = None
-    seed:Optional[int] = None
-    strength: Optional[float] = None
-
 @app.post("/img2img")
 def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
     request = req.dict()

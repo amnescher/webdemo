@@ -141,9 +141,8 @@ def inference(image, prompt,seed,scale,steps,eta,num_samples,sampler=None):
         t_progress.progress(min((t + 1) / steps, 1.))
 
     sampler.make_schedule(steps, ddim_eta=eta, verbose=True)
-    port_config = OmegaConf.load("/home/storage/config.yaml")
-    try:
-        result = paint(
+ 
+    result = paint(
             sampler=sampler,
             image=image,
             prompt=prompt,
@@ -155,17 +154,8 @@ def inference(image, prompt,seed,scale,steps,eta,num_samples,sampler=None):
             noise_level=noise_level,
             eta=eta
         )
-    except Exception:
-                payload = {
-                    "req_type": "Stable Diffusion version2 - upscaling",
-                    "error": traceback.format_exc()
-                    }
-                db_req = requests.post(
-                f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                data=json.dumps(payload),
-            )
 
-    outpath = "/home/storage/diff2/upscale/"
+    outpath = "/prediction"
     sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed))
     os.makedirs(sample_path, exist_ok=True)
     for base_count,image in enumerate(result):

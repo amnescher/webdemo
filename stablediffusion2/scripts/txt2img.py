@@ -62,7 +62,7 @@ def parse_args():
         type=str,
         nargs="?",
         help="dir to write results to",
-        default="/home/storage/diff2/txt2img/"
+        default="/prediction"
     )
     parser.add_argument(
         "--steps",

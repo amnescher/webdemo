@@ -38,11 +38,11 @@ def load_model_from_config(config, ckpt, verbose=False):
 
 def load_model():
         #connect to minio bucket
-        load_dotenv("storage/env.env")
-
-        access_key = os.environ.get('access_key')
-        secret_key = os.environ.get('secret_key')
+        load_dotenv()
+        access_key = os.getenv("access_key")
+        secret_key = os.getenv("secret_key")
         
+            
         client = Minio(
         "minio:9000",
         access_key=access_key,
@@ -91,7 +91,7 @@ def diff_model(
         letters = string.ascii_lowercase
         result_str = "".join(random.choice(letters) for i in range(15))
         image_path = "stableDiffusion/test_image/" + result_str + "_" + image.name
-        uploaded_image.save(image_path)
+        uploaded_image.convert('RGB').save(image_path)
         path, grid_path = img2img_infer(
             input_image=image_path,
             input_prompt=des,
@@ -105,3 +105,16 @@ def diff_model(
 
         return images[-1], path, grid_path
 
+def load_config_port():
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+    client = Minio(
+                    "minio:9000",
+                    access_key=access_key,
+                    secret_key=secret_key,secure=False
+                    )
+    # read configuration file includes port informations
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
+    return port

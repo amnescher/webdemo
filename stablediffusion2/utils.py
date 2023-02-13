@@ -4,6 +4,7 @@ import glob
 from scripts.img2img import img2img_infer
 from scripts.txt2img import txt2img_infer
 from scripts.streamlit.superresolution import inference
+from scripts.streamlit.inpainting import inpainting
 import shutil
 from omegaconf import OmegaConf
 import torch 
@@ -20,6 +21,7 @@ def diff_model(
     model=None,
     config = None,
     image_path=None,
+    mask = None,
     strength=0.8,
     dim=(512, 512),
     seed_num=42,
@@ -27,7 +29,7 @@ def diff_model(
     n_iter=2,
     eta = 0,
     scale =9,
-    steps = 50
+    steps = 50,
 ):
 
     if mode == "txt2img":
@@ -66,6 +68,11 @@ def diff_model(
         path = inference(image_path,prompt,seed_num,scale,steps,eta,num_samples,sampler=model)
         shutil.make_archive(path, "zip", path)
         return  path
+    elif mode == "Inpainting":
+        path = inpainting(image_path,mask,prompt,seed_num,scale,steps,num_samples,eta,sampler=model)
+        shutil.make_archive(path, "zip", path)
+        return  path
+
 
 
 
@@ -92,9 +99,9 @@ def load_model_from_config(config, ckpt, verbose=False):
 def load_model():
 
     #connect to minio bucket
-    load_dotenv("storage/env.env")
-    access_key = os.environ.get('access_key')
-    secret_key = os.environ.get('secret_key')
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
 
     client = Minio(
         "minio:9000",
@@ -103,15 +110,34 @@ def load_model():
     )
     
     print("uploading model weights from MinIO bucket")
+    
     client.fget_object("modelweight", "storage/model_weights/diff2/model_v2_768.ckpt", "model_weight_gen")
     client.fget_object("modelweight", "storage/model_weights/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
+    client.fget_object("modelweight", "storage/model_weights/diff2/512-inpainting-ema.ckpt", "model_weight_inpainting")
     print("model successfully downloaded!")
 
     config_gen = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")
     model_gen = load_model_from_config(config_gen, "model_weight_gen")
     model_upScale = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "model_weight_scaling")
+    model_inpainting = initialize_model("configs/stable-diffusion/v2-inpainting-inference.yaml", "model_weight_inpainting")
     
-    return model_gen, config_gen,model_upScale
+    return model_gen, config_gen,model_upScale,model_inpainting
     
+    
+def load_config_port():
+    #Connect to MINio bucket to download config file
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+
+    client = Minio(
+        "minio:9000",
+        access_key=access_key,
+        secret_key=secret_key,secure=False
+    )
+    # read configuration file includes port informations
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
+    return port
 
 

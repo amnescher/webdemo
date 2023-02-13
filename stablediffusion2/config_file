@@ -1,0 +1,6 @@
+model_ports:
+  donut: [donut_1]
+  stablediff1: [backend_stable_v1_1]
+  stablediff2: [backend_stable_v2_1]
+  gfpgan: [gfpgan_1]
+  db: [req_db]

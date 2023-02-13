@@ -8,7 +8,10 @@ services:
       ports:
         - 8501:8501
       volumes:
-          - ./storage:/home/storage
+          -  prediction:/prediction
+      environment:
+        access_key: ${access_key}
+        secret_key: ${secret_key}
       depends_on:
        - backend_stable_v1_1
        - donut_1
@@ -32,10 +35,13 @@ services:
               count: 1
               capabilities: [gpu]
     environment:
-    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    - NVIDIA_VISIBLE_DEVICES=all
+      access_key: ${access_key}
+      secret_key: ${secret_key}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      NVIDIA_VISIBLE_DEVICES: all
+
     volumes:
-         - ./storage:/home/storage/
+         - prediction:/prediction
   backend_stable_v2_1:
     build: 
       context: stablediffusion2
@@ -51,10 +57,13 @@ services:
               count: 1
               capabilities: [gpu]
     environment:
-    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    - NVIDIA_VISIBLE_DEVICES=all
+      access_key: ${access_key}
+      secret_key: ${secret_key}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      NVIDIA_VISIBLE_DEVICES: all
+    
     volumes:
-         - ./storage:/home/storage/
+         - prediction:/prediction
   donut_1:
     build: 
       context: donut
@@ -70,10 +79,12 @@ services:
               count: 1
               capabilities: [gpu]
     environment:
-    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    - NVIDIA_VISIBLE_DEVICES=all
+      access_key: ${access_key}
+      secret_key: ${secret_key}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      NVIDIA_VISIBLE_DEVICES: all
     volumes:
-         - ./storage:/home/storage/
+         - prediction:/prediction
   gfpgan_1:
     build: 
       context: GFPGAN
@@ -89,10 +100,12 @@ services:
               count: 1
               capabilities: [gpu]
     environment:
-    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    - NVIDIA_VISIBLE_DEVICES=all
+      access_key: ${access_key}
+      secret_key: ${secret_key}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      NVIDIA_VISIBLE_DEVICES: all
     volumes:
-         - ./storage:/home/storage/
+         - prediction:/prediction
   req_db:
     build:
       context: db
@@ -102,14 +115,7 @@ services:
       - 8509:8509
       - "9003:9003"
     volumes:
-      - ./storage/:/home/storage
-
-  minio_test:
-    build:
-      context: mintest
-      network: host
-    command: python test.py
-
+      - prediction:/prediction
   appsqldb:
     image: mysql
     ports:
@@ -128,6 +134,9 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server --console-address ":9001" /data
+
+    
 volumes:
   mysql:
   mysql_config:
+  prediction:

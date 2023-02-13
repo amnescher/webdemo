@@ -7,7 +7,19 @@ import numpy as np
 from PIL import Image
 from typing import List
 import config
-from utils import donut_app
+from utils import donut_app,load_config_port
+import requests
+
+
+port_config = load_config_port()
+
+try:
+        requests.post(
+                                f"http://{port_config.model_ports.db[-1]}:8509/initdb"
+                            )
+except:
+        print("database initialization failed")
+
 
 app = FastAPI()
 

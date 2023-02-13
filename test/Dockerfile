@@ -4,5 +4,4 @@ COPY requirements.txt .
 RUN pip install --upgrade pip &&\
     pip install -r requirements.txt
 ADD . .
-EXPOSE 8501
-CMD ["streamlit", "run", "HOME.py"]
+CMD ["python3", "backend.py"]

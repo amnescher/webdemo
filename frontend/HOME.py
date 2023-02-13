@@ -5,7 +5,31 @@ import pandas as pd
 import requests
 from omegaconf import OmegaConf
 import json
+import os 
 
+from dotenv import load_dotenv
+from minio import Minio
+from minio.error import S3Error
+from omegaconf import OmegaConf
+
+def load_config_port():
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+    client = Minio(
+                    "minio:9000",
+                    access_key=access_key,
+                    secret_key=secret_key,secure=False
+                    )
+    # read configuration file includes port informations
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
+    return port
+
+
+#add_bg_from_local("/home/storage/frontend/logo.jpeg")
+
+port_config = load_config_port()
 # Load background images
 #add_bg_from_local("storage/frontend/logo.jpeg")
 image_id = Image.open("/home/storage/frontend/id.png")

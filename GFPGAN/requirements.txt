@@ -15,3 +15,6 @@ uvicorn
 fastapi
 config
 python-multipart
+python-dotenv
+minio
+omegaconf

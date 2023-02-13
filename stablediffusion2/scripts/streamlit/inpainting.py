@@ -1,6 +1,8 @@
 import sys
+import os
 import cv2
 import torch
+import uuid
 import numpy as np
 import streamlit as st
 from PIL import Image
@@ -8,7 +10,6 @@ from omegaconf import OmegaConf
 from einops import repeat
 from streamlit_drawable_canvas import st_canvas
 from imwatermark import WatermarkEncoder
-
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.util import instantiate_from_config
 
@@ -190,6 +191,32 @@ def run():
                 for image in result:
                     st.image(image, output_format='PNG')
 
-
-if __name__ == "__main__":
-    run()
+def inpainting(image,
+                    mask,
+                    prompt,
+                    seed,
+                    scale,
+                    ddim_steps,
+                    num_samples, eta,sampler=None):
+    image = Image.open(image)
+    w, h = image.size
+    result = inpaint(
+                    sampler=sampler,
+                    image=image,
+                    mask=mask,
+                    prompt=prompt,
+                    seed=seed,
+                    scale=scale,
+                    ddim_steps=ddim_steps,
+                    num_samples=num_samples,
+                    w=w,
+                    h=h,
+                    eta=eta
+                )
+    
+    outpath = "/prediction"
+    sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed))
+    os.makedirs(sample_path, exist_ok=True)
+    for base_count,image in enumerate(result):
+        image.save(os.path.join(sample_path, f"{base_count:05}.png"))
+    return sample_path

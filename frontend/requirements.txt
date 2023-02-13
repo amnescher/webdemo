@@ -12,3 +12,6 @@ pandas
 streamlit-drawable-canvas==0.9.0
 svgpathtools
 svgwrite
+python-dotenv
+minio
+omegaconf

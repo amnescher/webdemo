@@ -18,17 +18,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     /bin/bash ~/miniconda.sh -b -p /opt/conda 
 # Put conda in path so we can use conda activate
 WORKDIR /home
-ADD .  .
+COPY environment.yml .
 ENV PATH=$home/bin:$PATH
 RUN conda update -n base -c defaults conda &&\
     conda env create -f  environment.yml
-#SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
-
-
-
-
-#EXPOSE 8505
-#ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "myenv", "python", "backend.py"]
-
-# RUN pip install -r requirements.txt
-# CMD ["python3","test.py"]
+ADD .  .

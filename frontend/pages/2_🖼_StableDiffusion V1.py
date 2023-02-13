@@ -13,25 +13,29 @@ from itertools import cycle
 import json
 import time
 
-def add_bg_from_local(image_file):
-    with open(image_file, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read())
-    st.markdown(
-        f"""
-    <style>
-    .stApp {{
-        background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
-        background-size: cover
-    }}
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
+from dotenv import load_dotenv
+from minio import Minio
+from minio.error import S3Error
+from omegaconf import OmegaConf
+
+def load_config_port():
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+    client = Minio(
+                    "minio:9000",
+                    access_key=access_key,
+                    secret_key=secret_key,secure=False
+                    )
+    # read configuration file includes port informations
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
+    return port
 
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 
-#port_config = OmegaConf.load("/home/storage/config.yaml")
+port_config = load_config_port()
 
 
 

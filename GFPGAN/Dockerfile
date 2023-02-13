@@ -10,9 +10,13 @@ RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install miniconda
-ADD .  /home/
 WORKDIR /home
-
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
+ADD .  .
+
+
+
+

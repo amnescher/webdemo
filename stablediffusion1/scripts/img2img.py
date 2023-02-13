@@ -82,7 +82,7 @@ def img2img_infer(input_image,input_prompt="a painting of a virus monster playin
         type=str,
         nargs="?",
         help="dir to write results to",
-        default="storage/diff1/img2img/"
+        default="/prediction"
     )
 
     parser.add_argument(

@@ -19,7 +19,7 @@ def inference(img_path,version = '1.3' ,upscale = 2,bg_upsampler= 'realesrgan',b
         type=str,
         default='inputs/whole_imgs',
         help='Input image or folder. Default: inputs/whole_imgs')
-    parser.add_argument('-o', '--output', type=str, default='storage/GFPGAN', help='Output folder. Default: results')
+    parser.add_argument('-o', '--output', type=str, default='/prediction', help='Output folder. Default: results')
     # we use version to select models, which is more user-friendly
     parser.add_argument(
         '-v', '--version', type=str, default='1.3', help='GFPGAN model version. Option: 1 | 1.2 | 1.3. Default: 1.3')
