@@ -12,37 +12,37 @@ from omegaconf import OmegaConf
 from itertools import cycle
 import json
 import time
-
 from dotenv import load_dotenv
 from minio import Minio
 from minio.error import S3Error
 from omegaconf import OmegaConf
 
+
 def load_config_port():
+    """
+    Returns a loaded yaml config file that includes port names of other microservices to send requests to
+    config file is downloaded from a minio bucket
+    """
     load_dotenv()
     access_key = os.getenv("access_key")
     secret_key = os.getenv("secret_key")
     client = Minio(
-                    "minio:9000",
-                    access_key=access_key,
-                    secret_key=secret_key,secure=False
-                    )
+        "minio:9000", access_key=access_key, secret_key=secret_key, secure=False
+    )
     # read configuration file includes port informations
     client.fget_object("configdata", "storage/config.yaml", "config_file")
     port = OmegaConf.load("config_file")
     return port
 
 
-#add_bg_from_local("/home/storage/frontend/logo.jpeg")
-
 port_config = load_config_port()
 
 
-
+# ------------ Info Page --------------
 st.sidebar.header("Select a demo")
 app_mode = st.sidebar.selectbox(
     "Options",
-    ["Info", "Image Generation", "Image Modification","Exploring"],
+    ["Info", "Image Generation", "Image Modification", "Exploring"],
 )
 if app_mode == "Info":
     st.markdown("# Stable Diffusion Version 1")
@@ -64,12 +64,11 @@ Here are some of the ways that SDIG is transforming various industries:
 """
     )
 
-port_config = OmegaConf.load("/home/storage/config.yaml")
-
+# ------------------------ text to image page --------------------------
 if app_mode == "Image Generation":
     st.markdown("# Stable Diffusion Version 1 - Image Generation")
     # Get configuration from user
-    desc = st.text_input(
+    prompt = st.text_input(
         "Prompt",
         value=" portrait photo of a old man crying, Tattles, sitting on bed, guages in ears, looking away, serious eyes, 50mm portrait photography, hard rim lighting photography–beta –ar 2:3 –beta –upbeta",
         key="Description_key",
@@ -88,59 +87,45 @@ if app_mode == "Image Generation":
         n_iter = st.number_input("iterations", value=3, step=1, key="iterations_key")
 
     run = st.button("Generate")
-    if run and desc:
+    if run and prompt:
         # make request body
         payload = {
-            "name": desc,
+            "prompt": prompt,
             "w": w,
             "h": h,
             "samples": samples,
             "n_iter": n_iter,
             "seed": s,
         }
-        #Send reuest 
+
         with st.spinner("Generating ..."):
-            start = time.time()
-            res = requests.post(
-                f"http://{port_config.model_ports.stablediff1[-1]}:8504/txt2img",
-                data=json.dumps(payload)
-            )
-            end = time.time()
-        try:
-            response = res.json()
-            zip_path = response["response"]["path"]
-            grid_path = response["response"]["grid_path"]
-            st.success('Successful!')
-            payload = {
-                    "req_type": "Stable Diffusion version1 - txt2img",
-                    "prompt": desc,
-                    "runtime": (end - start)
-                    }
-
-            db_req = requests.post(
-                f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                data=json.dumps(payload),
-            )
-
-            st.image(Image.open(response["response"]["image"]))
-            
-            # enable user to download the generated image in a zip file
-            with open(zip_path + ".zip", "rb") as file:
-                btn = st.download_button(
-                    label="Download Samples",
-                    data=file,
-                    file_name=zip_path + ".zip",
+            # Send reuest
+            try:
+                response = requests.post(
+                    f"http://{port_config.model_ports.stablediff1[-1]}:8504/txt2img",
+                    data=json.dumps(payload),
                 )
-            shutil.rmtree(zip_path)
-            shutil.rmtree(grid_path)
-            os.remove(zip_path + ".zip")
+                # process response
+                response = response.json()
+                zip_path = response["response"]["path"]
+                grid_path = response["response"]["grid_path"]
+                st.success("Successful!")
+                st.image(Image.open(response["response"]["image"]))
+                # enable user to download the generated image in a zip file
+                with open(zip_path + ".zip", "rb") as file:
+                    btn = st.download_button(
+                        label="Download Samples",
+                        data=file,
+                        file_name=zip_path + ".zip",
+                    )
+                shutil.rmtree(zip_path)
+                shutil.rmtree(grid_path)
+                os.remove(zip_path + ".zip")
 
-        except NameError:
-            st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
-        except json.decoder.JSONDecodeError: 
-            st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
-        
-# image to image
+            except Exception:
+                st.error("Unsuccessful. Encountered an error. Try again!", icon="🚨")
+
+# ----------------------- image to image page------------------------
 elif app_mode == "Image Modification":
     st.markdown("# Stable Diffusion Version 1 - Image Modification")
     # upload input image
@@ -149,7 +134,7 @@ elif app_mode == "Image Modification":
         type=["jpg", "jpeg", "png"],
     )
     if uploaded_file:
-        #check if image size is not smaller than 256*256
+        # check if image size is not smaller than 256*256
         st.image(uploaded_file)
         image = Image.open(uploaded_file)
         w, h = image.size
@@ -188,59 +173,53 @@ elif app_mode == "Image Modification":
         if Prompt and run:
             files = {"files": uploaded_file.getvalue()}
             payload = payload = {
-                "name": Prompt,
+                "prompt": Prompt,
                 "samples": samples,
                 "n_iter": n_iter,
                 "seed": s,
                 "strength": strng,
             }
             with st.spinner("Generating ..."):
-                start = time.time()
-                res = requests.post(
-                    f"http://{port_config.model_ports.stablediff1[-1]}:8504/img2img",
-                    params=payload,
-                    files=files,
-                )
-                end = time.time()
-            #get the response back that includes pathes to generated images
-            try:
-                response = res.json()
-                zip_path = response["response"]["path"]
-                grid_path = response["response"]["grid_path"]
-                st.success('Successful!')
 
-                payload = {
-                    "req_type": "Stable Diffusion version1 - img2img",
-                    "prompt": Prompt,
-                    "runtime": (end - start)
-                    }
-
-                db_req = requests.post(
-                f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                data=json.dumps(payload),
-            )
-                st.image(Image.open(response["response"]["image"]))
-                #enable user to download generated image
-                with open(zip_path + ".zip", "rb") as file:
-                    btn = st.download_button(
-                        label="Download Samples",
-                        data=file,
-                        file_name=zip_path + ".zip",
+                try:
+                    response = requests.post(
+                        f"http://{port_config.model_ports.stablediff1[-1]}:8504/img2img",
+                        params=payload,
+                        files=files,
                     )
-                #delete generated images/directory to save space
-                shutil.rmtree(zip_path)
-                shutil.rmtree(grid_path)
-                os.remove(zip_path + ".zip")
-            
-            except NameError:
-                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
-            except json.decoder.JSONDecodeError: 
-                st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+                    # get the response back that includes pathes to generated images
+                    response = response.json()
+                    zip_path = response["response"]["path"]
+                    grid_path = response["response"]["grid_path"]
+                    st.success("Successful!")
+                    st.image(Image.open(response["response"]["image"]))
+                    # enable user to download generated image
+                    with open(zip_path + ".zip", "rb") as file:
+                        btn = st.download_button(
+                            label="Download Samples",
+                            data=file,
+                            file_name=zip_path + ".zip",
+                        )
+                    # delete generated images/directory to save space
+                    shutil.rmtree(zip_path)
+                    shutil.rmtree(grid_path)
+                    os.remove(zip_path + ".zip")
+
+                except Exception:
+                    st.error(
+                        "Unsuccessful. Encountered an error. Please try again!",
+                        icon="🚨",
+                    )
+
+# -------------------- Exploring page that shows examples generated by stable diffusion
 elif app_mode == "Exploring":
-    f = open('storage/frontend/exploring_stable_v1/prompt.json')
+    f = open("images/exploring_stable_v1/prompt.json")
     images = json.load(f)
 
-    cols = cycle(st.columns(2)) # st.columns here since it is out of beta at the time I'm writing this
-    for key,val in images.items() :
-        next(cols).image(Image.open("storage/frontend/exploring_stable_v1/"+key), width=256, caption=val)
-
+    cols = cycle(
+        st.columns(2)
+    )  # st.columns here since it is out of beta at the time I'm writing this
+    for key, val in images.items():
+        next(cols).image(
+            Image.open("images/exploring_stable_v1/" + key), width=256, caption=val
+        )

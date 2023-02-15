@@ -31,7 +31,7 @@ def load_config_port():
     return port
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
-image_id = Image.open("/home/storage/frontend/ocr.jpeg")
+image_id = Image.open("images/frontend/ocr.jpeg")
 
 st.sidebar.header("Select a demo")
 # load port configuration

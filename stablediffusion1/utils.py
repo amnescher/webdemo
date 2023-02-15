@@ -9,7 +9,7 @@ import shutil
 import random
 import string
 import uuid
-import torch 
+import torch
 from ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
 from minio import Minio
@@ -31,36 +31,48 @@ def load_model_from_config(config, ckpt, verbose=False):
     if len(u) > 0 and verbose:
         print("unexpected keys:")
         print(u)
-
     model.cuda()
     model.eval()
+
     return model
 
-def load_model():
-        #connect to minio bucket
-        load_dotenv()
-        access_key = os.getenv("access_key")
-        secret_key = os.getenv("secret_key")
-        
-            
-        client = Minio(
+
+def load_files_from_minIO_bucket():
+
+    # connect to minio bucket and download and return model weight and config file needed by stable diffusion
+    # returns loaded model, model configuration file and port configuration file
+
+    # Load access key and secret key to connect to minIO server
+    #connect to minio bucket
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+
+    client = Minio(
         "minio:9000",
         access_key=access_key,
         secret_key=secret_key,secure=False
     )
-        found = client.bucket_exists("modelweight")
+    # Load model congiguration
+    config = OmegaConf.load("configs/stable-diffusion/v1-inference.yaml")
+    print("Downloading model from MinIO bucket")
+    # Download model's weight from minio bucket and load model weight
+    client.fget_object(
+        "modelweight", "storage/model_weights/diff1/model_v1.ckpt", "model_weight"
+    )
+    model = load_model_from_config(config, "model_weight")
+    # Download port conf file from minio bucker and load config fie
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
 
-        print("Downloading model from MinIO bucket")
-        client.fget_object("modelweight", "storage/model_weights/diff1/model_v1.ckpt", "model_weight")
-        config = OmegaConf.load("configs/stable-diffusion/v1-inference.yaml")
-        model = load_model_from_config(config, "model_weight")
-        return model, config
+    return model, config, port
+
 
 def diff_model(
-    des,
+    prompt,
     mode,
-    model = None,
-    config = None,
+    model=None,
+    config=None,
     image=None,
     strength=0.8,
     dim=(512, 512),
@@ -68,12 +80,24 @@ def diff_model(
     n_samples=3,
     n_iter=2,
 ):
+    """
+    Returns path to generated images by stable diffudion
+    grid_path: path to grid of generated images
+    path: path to directory that stores generated images
+
+    Args:
+    prompt: user prompt to generate image based on it
+    mode: stable diffusion mode, options: txt2img, txt2img
+    model: stable difusion model
+    config: model configuration file
+    input_plms, seed_num,n_samples, are stable diffusion input args
+    """
 
     if mode == "txt2img":
         path, grid_path = txt2img_infer(
-            input_prompt=des,
-            model = model,
-            config = config,
+            input_prompt=prompt,
+            model=model,
+            config=config,
             input_plms=True,
             dim=dim,
             seed_num=seed_num,
@@ -91,10 +115,10 @@ def diff_model(
         letters = string.ascii_lowercase
         result_str = "".join(random.choice(letters) for i in range(15))
         image_path = "stableDiffusion/test_image/" + result_str + "_" + image.name
-        uploaded_image.convert('RGB').save(image_path)
+        uploaded_image.convert("RGB").save(image_path)
         path, grid_path = img2img_infer(
             input_image=image_path,
-            input_prompt=des,
+            input_prompt=prompt,
             input_strength=strength,
             seed_num=seed_num,
             n_samples=n_samples,
@@ -104,17 +128,3 @@ def diff_model(
         images = glob.glob(grid_path + "/*.png")
 
         return images[-1], path, grid_path
-
-def load_config_port():
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_key = os.getenv("secret_key")
-    client = Minio(
-                    "minio:9000",
-                    access_key=access_key,
-                    secret_key=secret_key,secure=False
-                    )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port

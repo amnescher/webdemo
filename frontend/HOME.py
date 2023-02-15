@@ -32,9 +32,9 @@ def load_config_port():
 port_config = load_config_port()
 # Load background images
 #add_bg_from_local("storage/frontend/logo.jpeg")
-image_id = Image.open("/home/storage/frontend/id.png")
-image_stablediff = Image.open("/home/storage/frontend/butterfly.jpeg")
-image_faceResto = Image.open("/home/storage/frontend/faceresto.jpeg")
+image_id = Image.open("images/id.png")
+image_stablediff = Image.open("images/butterfly.jpeg")
+image_faceResto = Image.open("images/faceresto.jpeg")
 
 # Page title
 st.write("# ESCERCLOUD AI Computer Vision Services - Demo! 👋")
