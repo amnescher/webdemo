@@ -142,4 +142,4 @@ dmypy.json
 /storage/model_weights/diff2/*
 /storage/test_image/*
 /storage/GFPGAN/*
-/storage/model_weights/GFPGAN/*
+/storage/*

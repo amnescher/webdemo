@@ -96,8 +96,14 @@ def load_model_from_config(config, ckpt, verbose=False):
     model.eval()
     return model
 
-def load_model():
 
+
+def load_files_from_minIO_bucket():
+
+    # connect to minio bucket and download and return model weight and config file needed by stable diffusion
+    # returns loaded model, model configuration file and port configuration file
+
+    # Load access key and secret key to connect to minIO server
     #connect to minio bucket
     load_dotenv()
     access_key = os.getenv("access_key")
@@ -110,18 +116,22 @@ def load_model():
     )
     
     print("uploading model weights from MinIO bucket")
-    
+    # download model weights for txt2img/img2img, superresolution, and in-painting models from minio
     client.fget_object("modelweight", "storage/model_weights/diff2/model_v2_768.ckpt", "model_weight_gen")
     client.fget_object("modelweight", "storage/model_weights/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
     client.fget_object("modelweight", "storage/model_weights/diff2/512-inpainting-ema.ckpt", "model_weight_inpainting")
     print("model successfully downloaded!")
-
+    #load model config for txt2img/img2img
     config_gen = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")
+    #load downloaded model into gpu
     model_gen = load_model_from_config(config_gen, "model_weight_gen")
     model_upScale = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "model_weight_scaling")
     model_inpainting = initialize_model("configs/stable-diffusion/v2-inpainting-inference.yaml", "model_weight_inpainting")
+
+    client.fget_object("configdata", "storage/config.yaml", "config_file")
+    port = OmegaConf.load("config_file")
     
-    return model_gen, config_gen,model_upScale,model_inpainting
+    return model_gen, config_gen,model_upScale,model_inpainting, port
     
     
 def load_config_port():

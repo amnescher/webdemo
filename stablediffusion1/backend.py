@@ -107,7 +107,7 @@ def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
 
     # save request information in the database
     request_info = {
-        "req_type": "Stable Diffusion version1 - txt2img",
+        "req_type": "Stable Diffusion version1 - img2img",
         "prompt": request["prompt"],
         "runtime": (end - start),
     }

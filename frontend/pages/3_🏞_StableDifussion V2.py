@@ -65,7 +65,7 @@ Here are some of the ways that SDIG is transforming various industries:
 """
     )
 
-
+#-------------------------------------- text to image----------------------
 if app_mode == "Image Generation":
     st.markdown("# Stable Diffusion Version 2 - Image Generation")
     #Read input prompt and user configs 
@@ -91,7 +91,7 @@ if app_mode == "Image Generation":
     if run and Prompt:
         # make request body and send it
         payload = {
-            "name": Prompt,
+            "prompt": Prompt,
             "w": w,
             "h": h,
             "samples": samples,
@@ -99,47 +99,37 @@ if app_mode == "Image Generation":
             "seed": s,
         }
         with st.spinner("Generating ..."):
-            start = time.time()
-            res = requests.post(
-                f"http://{port_config.model_ports.stablediff2[-1]}:8505/txt2img",
-                data=json.dumps(payload),
-            )
-            end = time.time()
-        try:
-            response = res.json()
-            zip_path = response["response"]["path"]
-            grid_path = response["response"]["grid_path"]
-            st.success('Successful!')
-            st.image(Image.open(response["response"]["image"]))
-
-            payload = {
-                    "req_type": "Stable Diffusion version2 - txt2img",
-                    "prompt": Prompt,
-                    "runtime": (end - start)
-                    }
-
-            db_req = requests.post(
-                f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                data=json.dumps(payload),
-            )
-            # enable user to download generated images
-            with open(zip_path + ".zip", "rb") as file:
-                btn = st.download_button(
-                    label="Download Samples",
-                    data=file,
-                    file_name=zip_path + ".zip",
+            
+            try:
+                res = requests.post(
+                    f"http://{port_config.model_ports.stablediff2[-1]}:8505/txt2img",
+                    data=json.dumps(payload),
                 )
-                # delete generated files/directories
-            shutil.rmtree(zip_path)
-            shutil.rmtree(grid_path)
-            os.remove(zip_path + ".zip")
-        except NameError:
-            st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
-        except json.decoder.JSONDecodeError: 
-            st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+                
+            
+                response = res.json()
+                zip_path = response["response"]["path"]
+                grid_path = response["response"]["grid_path"]
+                st.success('Successful!')
+                st.image(Image.open(response["response"]["image"]))
 
-        
-# image to image
+                # enable user to download generated images
+                with open(zip_path + ".zip", "rb") as file:
+                    btn = st.download_button(
+                        label="Download Samples",
+                        data=file,
+                        file_name=zip_path + ".zip",
+                    )
+                    # delete generated files/directories
+                shutil.rmtree(zip_path)
+                shutil.rmtree(grid_path)
+                os.remove(zip_path + ".zip")
+            except Exception:
+                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+            
+
+            
+# -------------------------------------------   image to image --------------
 
 elif app_mode == "Image Modification":
     st.markdown("# Stable Diffusion Version 2 - Image Modification")
@@ -191,53 +181,48 @@ elif app_mode == "Image Modification":
             #make request body and send it
             files = {"files": uploaded_file.getvalue()}
             payload = {
-                "name": prompt,
+                "prompt": prompt,
                 "samples": samples,
                 "n_iter": n_iter,
                 "seed": s,
                 "strength": strng,
             }
             with st.spinner("Generating ..."):
-                start = time.time()
-                res = requests.post(
-                    f"http://{port_config.model_ports.stablediff2[-1]}:8505/img2img",
-                    params=payload,
-                    files=files,
-                )
-                end = time.time()
-            try:
-                # get the respons includes paths to generated images
-                response = res.json()
-                zip_path = response["response"]["path"]
-                grid_path = response["response"]["grid_path"]
-                st.success('Successful!')
-                payload = {
-                    "req_type": "Stable Diffusion version2 - img2img",
-                    "prompt":prompt,
-                    "runtime": (end - start)
-                    }
-
-            #     db_req = requests.post(
-            #     f"http://{port_config.model_ports.db[-1]}:8509/insert",
-            #     data=json.dumps(payload),
-            # )
-                st.image(Image.open(response["response"]["image"]))
-                # enable user to download generated images 
-                with open(zip_path + ".zip", "rb") as file:
-                    btn = st.download_button(
-                        label="Download Samples",
-                        data=file,
-                        file_name=zip_path + ".zip",
+                
+                try:
+                    res = requests.post(
+                        f"http://{port_config.model_ports.stablediff2[-1]}:8505/img2img",
+                        params=payload,
+                        files=files,
                     )
-                    # delete generated images and directories
-                shutil.rmtree(zip_path)
-                shutil.rmtree(grid_path)
-                os.remove(zip_path + ".zip")
-            except NameError:
-                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
-            except json.decoder.JSONDecodeError: 
-                st.error('Unsuccessful. Encountered an error. Please try again!', icon="🚨")
+                    
+                
+                    # get the respons includes paths to generated images
+                    response = res.json()
+                    zip_path = response["response"]["path"]
+                    grid_path = response["response"]["grid_path"]
+                    st.success('Successful!')
+                
 
+               
+                    st.image(Image.open(response["response"]["image"]))
+                    # enable user to download generated images 
+                    with open(zip_path + ".zip", "rb") as file:
+                        btn = st.download_button(
+                            label="Download Samples",
+                            data=file,
+                            file_name=zip_path + ".zip",
+                        )
+                        # delete generated images and directories
+                    shutil.rmtree(zip_path)
+                    shutil.rmtree(grid_path)
+                    os.remove(zip_path + ".zip")
+                except Exception:
+                    st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+                
+
+                   
+# -------------------------------------------   Super resolution --------------
 elif app_mode == "Upscaling":
     st.markdown("# Stable Diffusion Version 2 - Image Up Scaling")
     uploaded_file = st.file_uploader(
@@ -284,49 +269,40 @@ elif app_mode == "Upscaling":
                 "eta": eta,
             }
             with st.spinner("Generating ..."):
-                start = time.time()
-                res = requests.post(
-                    f"http://{port_config.model_ports.stablediff2[-1]}:8505/upscale",
-                    params=payload,
-                    files=files,
-                )
-                end = time.time()
-            try:
-                response = res.json()
-            # get the response back that includes path to generated image
-                zip_path = response["response"]["image"]
-                st.success('Successful!')
-                payload = {
-                    "req_type": "Stable Diffusion version2 - upscaling",
-                    "prompt": prompt,
-                    "runtime": (end - start)
-                    }
-                db_req = requests.post(
-                f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                data=json.dumps(payload),
-            )
-                filename_list = glob(os.path.join(zip_path, "*.png"))
-                for filename in filename_list:
-                    im = Image.open(filename)
-                    st.image(im)
-                # enable users to download generated images
-                with open(zip_path + ".zip", "rb") as file:
-                    btn = st.download_button(
-                        label="Download Samples",
-                        data=file,
-                        file_name=zip_path + ".zip",
+                
+                try:
+                    res = requests.post(
+                        f"http://{port_config.model_ports.stablediff2[-1]}:8505/upscale",
+                        params=payload,
+                        files=files,
                     )
-                # delete generated images and directories
-                shutil.rmtree(zip_path)
-                os.remove(zip_path + ".zip")
-            except Exception:
-                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+
+                    response = res.json()
+                # get the response back that includes path to generated image
+                    zip_path = response["response"]["image"]
+                    st.success('Successful!')
+                    filename_list = glob(os.path.join(zip_path, "*.png"))
+                    for filename in filename_list:
+                        im = Image.open(filename)
+                        st.image(im)
+                    # enable users to download generated images
+                    with open(zip_path + ".zip", "rb") as file:
+                        btn = st.download_button(
+                            label="Download Samples",
+                            data=file,
+                            file_name=zip_path + ".zip",
+                        )
+                    # delete generated images and directories
+                    shutil.rmtree(zip_path)
+                    os.remove(zip_path + ".zip")
+                except Exception:
+                    st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
 
 
 
 
 
-
+# -------------------------------------------   INpainting --------------
 
 
 
@@ -339,104 +315,98 @@ elif app_mode == "Inpainting":
     if image_uploaded:
         image = Image.open(image_uploaded)
         w, h = image.size
-        
-        width, height = map(lambda x: x - x % 64, (w, h))  # resize to integer multiple of 32
-        image = image.resize((width, height))
-        st.info(f"Loaded input image resized into ({width}, {height})", icon="ℹ️")
-        prompt = st.text_input("Prompt")
+        if w <256 or h< 256:
+            st.info(f"Loaded input image resized into ({w}, {h})", icon="ℹ️")
+            st.info(f"image too small, should be larger than 256x256", icon="ℹ️")
+        else:
+            width, height = map(lambda x: x - x % 64, (w, h))  # resize to integer multiple of 32
+            image = image.resize((width, height))
+            st.info(f"Loaded input image resized into ({width}, {height})", icon="ℹ️")
+            prompt = st.text_input("Prompt")
 
-        seed = st.number_input("Seed", min_value=0, max_value=1000000, value=0)
-        num_samples = st.number_input("Number of Samples", min_value=1, max_value=64, value=1)
-        scale = st.slider("Scale", min_value=0.1, max_value=30.0, value=10., step=0.1)
-        ddim_steps = st.slider("DDIM Steps", min_value=0, max_value=50, value=50, step=1)
-        eta = st.number_input("eta (DDIM)", value=0., min_value=0., max_value=1.)
-        stroke_width = st.slider("Stroke width: ", 1, 25, 3)
-        
-        fill_color = "rgba(255, 255, 255, 0.0)"
-        stroke_color = "rgba(255, 255, 255, 1.0)"
-        bg_color = "rgba(0, 0, 0, 1.0)"
-        drawing_mode = "freedraw"
-
-        st.write("Canvas")
-        st.caption(
-            "Draw a mask to inpaint, then click the 'Send to Streamlit' button (bottom left, with an arrow on it).")
-        canvas_result = st_canvas(
-            fill_color=fill_color,
-            stroke_width=stroke_width,
-            stroke_color=stroke_color,
-            background_color=bg_color,
-            background_image=image,
-            update_streamlit=False,
-            height=height,
-            width=width,
-            drawing_mode=drawing_mode,
-            key="canvas",
-        )
-        if canvas_result:
-            mask = canvas_result.image_data
+            seed = st.number_input("Seed", min_value=0, max_value=1000000, value=0)
+            num_samples = st.number_input("Number of Samples", min_value=1, max_value=64, value=1)
+            scale = st.slider("Scale", min_value=0.1, max_value=30.0, value=10., step=0.1)
+            ddim_steps = st.slider("DDIM Steps", min_value=0, max_value=50, value=50, step=1)
+            eta = st.number_input("eta (DDIM)", value=0., min_value=0., max_value=1.)
+            stroke_width = st.slider("Stroke width: ", 1, 25, 3)
             
-            mask = mask[:, :, -1] > 0
-            if mask.sum() > 0:
-                mask = Image.fromarray(mask)
-                mask_name = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_"+str(seed)) + "_mask.png"
-                image_name = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_"+str(seed)) + "_image.png"
-                mask.save(mask_name, "PNG")
-                image.convert("RGB").save(image_name, "PNG")
-                files = [
-        ('files',('image1', open(image_name,'rb'), 'image/png') ),
-        ('files', ('image2', open(mask_name,'rb'), 'image/png'))
-        ]
+            fill_color = "rgba(255, 255, 255, 0.0)"
+            stroke_color = "rgba(255, 255, 255, 1.0)"
+            bg_color = "rgba(0, 0, 0, 1.0)"
+            drawing_mode = "freedraw"
+
+            st.write("Canvas")
+            st.caption(
+                "Draw a mask to inpaint, then click the 'Send to Streamlit' button (bottom left, with an arrow on it).")
+            canvas_result = st_canvas(
+                fill_color=fill_color,
+                stroke_width=stroke_width,
+                stroke_color=stroke_color,
+                background_color=bg_color,
+                background_image=image,
+                update_streamlit=False,
+                height=height,
+                width=width,
+                drawing_mode=drawing_mode,
+                key="canvas",
+            )
+            if canvas_result:
+                mask = canvas_result.image_data
                 
-                payload = {
-                "prompt": prompt,
-                "samples": num_samples,
-                "steps": ddim_steps,
-                "seed": seed,
-                "scale": scale,
-                "eta": eta,
-            }
-                run = st.button("Generate")
-                if run:
-                    with st.spinner("Generating ..."):
-                        start = time.time()
-                        res = requests.post(
-    
-                            f"http://{port_config.model_ports.stablediff2[-1]}:8505/Inpainting",
-                            params=payload,
-                            files=files,
-                        )
-                        end = time.time()
-                    try:
-                        response = res.json()
-    
-                    # get the response back that includes path to generated image
-                        zip_path = response["response"]["image"]
-                        st.success('Successful!')
-                        payload = {
-                            "req_type": "Stable Diffusion version2 - upscaling",
-                            "prompt": prompt,
-                            "runtime": (end - start)
-                            }
-                        db_req = requests.post(
-                        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                        data=json.dumps(payload),
-                    )
-                        filename_list = glob(os.path.join(zip_path, "*.png"))
-                        for filename in filename_list:
-                            im = Image.open(filename)
-                            st.image(im)
-                        # enable users to download generated images
-                        with open(zip_path + ".zip", "rb") as file:
-                            btn = st.download_button(
-                                label="Download Samples",
-                                data=file,
-                                file_name=zip_path + ".zip",
-                            )
-                        # delete generated images and directories
-                        shutil.rmtree(zip_path)
-                        os.remove(zip_path + ".zip")
-                        os.remove(image_name)
-                        os.remove(mask_name)
-                    except Exception:
-                        st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+                mask = mask[:, :, -1] > 0
+                if mask.sum() > 0:
+                    mask = Image.fromarray(mask)
+                    mask_name = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_"+str(seed)) + "_mask.png"
+                    image_name = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_"+str(seed)) + "_image.png"
+                    mask.save(mask_name, "PNG")
+                    image.convert("RGB").save(image_name, "PNG")
+                    files = [
+            ('files',('image1', open(image_name,'rb'), 'image/png') ),
+            ('files', ('image2', open(mask_name,'rb'), 'image/png'))
+            ]
                     
+                    payload = {
+                    "prompt": prompt,
+                    "samples": num_samples,
+                    "steps": ddim_steps,
+                    "seed": seed,
+                    "scale": scale,
+                    "eta": eta,
+                }
+                    run = st.button("Generate")
+                    if run:
+                        with st.spinner("Generating ..."):
+                            
+                            try:
+                                res = requests.post(
+            
+                                    f"http://{port_config.model_ports.stablediff2[-1]}:8505/Inpainting",
+                                    params=payload,
+                                    files=files,
+                                )
+                                response = res.json()
+            
+                            # get the response back that includes path to generated image
+                                zip_path = response["response"]["image"]
+                                st.success('Successful!')
+                            
+                                filename_list = glob(os.path.join(zip_path, "*.png"))
+                                for filename in filename_list:
+                                    im = Image.open(filename)
+                                    st.image(im)
+                                # enable users to download generated images
+                                with open(zip_path + ".zip", "rb") as file:
+                                    btn = st.download_button(
+                                        label="Download Samples",
+                                        data=file,
+                                        file_name=zip_path + ".zip",
+                                    )
+                                # delete generated images and directories
+                                shutil.rmtree(zip_path)
+                                os.remove(zip_path + ".zip")
+                                os.remove(image_name)
+                                os.remove(mask_name)
+                            except Exception:
+                                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+                            
