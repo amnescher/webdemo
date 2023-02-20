@@ -133,4 +133,5 @@ dmypy.json
 .ckpt
 .pth
 /storage/*
-env.env
+env_client.env
+env_server.env
