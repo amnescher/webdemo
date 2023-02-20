@@ -7,11 +7,14 @@ services:
       command: streamlit run HOME.py
       ports:
         - 8501:8501
+      expose:
+        - "9000"
       volumes:
           -  prediction:/prediction
       environment:
         access_key: ${access_key}
         secret_key: ${secret_key}
+        MINIO_SERVER_IP: ${MINIO_SERVER_IP}
       depends_on:
        - backend_stable_v1_1
        - donut_1
@@ -27,6 +30,8 @@ services:
     command: conda run --no-capture-output -n ldm python backend.py
     ports:
       - 8504:8504
+    expose:
+        - "9000"
     deploy:
       resources:
         reservations:
@@ -39,6 +44,7 @@ services:
       secret_key: ${secret_key}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
+      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
 
     volumes:
          - prediction:/prediction
@@ -49,6 +55,8 @@ services:
     command:  conda run --no-capture-output -n myenv python backend.py
     ports:
       - 8505:8505
+    expose:
+        - "9000"
     deploy:
       resources:
         reservations:
@@ -61,6 +69,7 @@ services:
       secret_key: ${secret_key}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
+      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
     
     volumes:
          - prediction:/prediction
@@ -71,6 +80,8 @@ services:
     command: python3 backend.py
     ports:
       - 8503:8503
+    expose:
+        - "9000"
     deploy:
       resources:
         reservations:
@@ -83,6 +94,7 @@ services:
       secret_key: ${secret_key}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
+      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
     volumes:
          - prediction:/prediction
   gfpgan_1:
@@ -92,6 +104,8 @@ services:
     command: python3 backend.py
     ports:
       - 8506:8506
+    expose:
+        - "9000"
     deploy:
       resources:
         reservations:
@@ -104,6 +118,7 @@ services:
       secret_key: ${secret_key}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
+      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
     volumes:
          - prediction:/prediction
   req_db:
@@ -113,7 +128,8 @@ services:
     command: python3 backend.py
     ports:
       - 8509:8509
-      - "9003:9003"
+    expose:
+        - "9000"
     volumes:
       - prediction:/prediction
   appsqldb:
@@ -128,8 +144,8 @@ services:
   minio:
     image: minio/minio
     ports:
-      - "9001:9001"
-      - "9000:9000" 
+      - 9001:9001
+      - 9000:9000
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}

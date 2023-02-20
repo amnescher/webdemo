@@ -26,8 +26,12 @@ def load_config_port():
     load_dotenv()
     access_key = os.getenv("access_key")
     secret_key = os.getenv("secret_key")
+    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+    
     client = Minio(
-        "minio:9000", access_key=access_key, secret_key=secret_key, secure=False
+        f"{minio_server_ip}:9000",
+        access_key=access_key,
+        secret_key=secret_key,secure=False
     )
     # read configuration file includes port informations
     client.fget_object("configdata", "storage/config.yaml", "config_file")
