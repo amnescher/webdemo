@@ -7,6 +7,8 @@ import torch
 from basicsr.utils import imwrite
 import uuid
 from gfpgan import GFPGANer
+from dotenv import load_dotenv
+from minio import Minio
 
 
 def inference(img_path,version = '1.3' ,upscale = 2,bg_upsampler= 'realesrgan',bg_tile = 400):
@@ -114,13 +116,29 @@ def inference(img_path,version = '1.3' ,upscale = 2,bg_upsampler= 'realesrgan',b
     # if not os.path.isfile(model_path):
     #     # download pre-trained models from url
     #     model_path = url
-    try:
-         os.path.isfile(model_path)
-    except:
-        print("model doesn't exist in ", model_path)
+    # try:
+    #      os.path.isfile(model_path)
+    # except:
+    #     print("model doesn't exist in ", model_path)
+
+    # Download model from MinIO bucket
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+
+    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+    
+    client = Minio(
+        f"{minio_server_ip}:9000",
+        access_key=access_key,
+        secret_key=secret_key,secure=False
+    )
+    client.fget_object(
+        "modelweight", "storage/model_weights/GFPGAN/GFPGANv1.3.pth", "model_weight"
+    )
 
     restorer = GFPGANer(
-        model_path=model_path,
+        model_path= "model_weight",
         upscale=args.upscale,
         arch=arch,
         channel_multiplier=channel_multiplier,

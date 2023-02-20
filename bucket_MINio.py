@@ -10,7 +10,7 @@ def main():
     # Create a client with the MinIO server playground, its access key
     # and secret key.
 
-    load_dotenv("./env.env")
+    load_dotenv("./env_client.env")
     access_key = os.environ.get('access_key')
     secret_key = os.environ.get('secret_key')
 
@@ -77,7 +77,9 @@ def main():
     # #     "config_data", "storage/config.yaml", "storage/config.yaml",
     # # )
 
-    
+    client.fput_object(
+        "modelweight", "storage/model_weights/GFPGAN/GFPGANv1.3.pth", "/home/ubuntu/dev/webapp/webdemo/storage/model_weights/GFPGAN/GFPGANv1.3.pth",
+    )
 
 
 if __name__ == "__main__":

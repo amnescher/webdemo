@@ -33,7 +33,7 @@ def load_config_port():
     return port
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
-image_id = Image.open("images/frontend/ocr.jpeg")
+#image_id = Image.open("/home/images/frontend/ocr.jpeg")
 
 st.sidebar.header("Select a demo")
 # load port configuration
@@ -44,7 +44,7 @@ app_mode = st.sidebar.selectbox(
 )
 if app_mode == "Info":
     st.markdown("# Document Understanding")
-    st.image(image_id)
+    #st.image(image_id)
     # add description
     st.write(
         """## What is Document Understanding?

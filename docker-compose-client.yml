@@ -22,7 +22,6 @@ services:
        - gfpgan_1
        - appsqldb
        - req_db
-       - minio
   backend_stable_v1_1:
     build: 
       context: stablediffusion1
@@ -141,16 +140,6 @@ services:
     volumes:
     - mysql:/var/lib/mysql
     - mysql_config:/etc/mysql
-  minio:
-    image: minio/minio
-    ports:
-      - 9001:9001
-      - 9000:9000
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    command: server --console-address ":9001" /data
-
     
 volumes:
   mysql:
