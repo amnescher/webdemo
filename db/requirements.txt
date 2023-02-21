@@ -10,3 +10,5 @@ streamlit-authenticator
 mysql-connector-python
 mysql-connector-python
 pydantic
+python-dotenv
+omegaconf
