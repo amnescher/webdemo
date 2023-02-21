@@ -7,6 +7,12 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Union,Optional
+from dotenv import load_dotenv
+import os 
+
+load_dotenv() 
+mysql_pass = os.getenv("MYSQL_ROOT_PASSWORD")
+
 
 app = FastAPI()
 
@@ -19,7 +25,7 @@ def get_widgets():
     mydb = mysql.connector.connect(
         host="appsqldb",
         user="root",
-        password="p@ssw0rd1",
+        password=mysql_pass,
         database="requests_info"
     )
     cursor = mydb.cursor()
@@ -43,7 +49,7 @@ def db_init():
     mydb = mysql.connector.connect(
         host="appsqldb",
         user="root",
-        password="p@ssw0rd1"
+        password=mysql_pass
     )
     cursor = mydb.cursor()
     cursor.execute("CREATE DATABASE IF NOT EXISTS requests_info;")
@@ -51,7 +57,7 @@ def db_init():
     mydb = mysql.connector.connect(
         host="appsqldb",
         user="root",
-        password="p@ssw0rd1",
+        password=mysql_pass,
         database="requests_info"
     )
     cursor = mydb.cursor()
@@ -68,12 +74,13 @@ class req_info(BaseModel):
     runtime: Optional[float] = None
     error: Optional[str] = None
 
+
 @app.post('/insert')   
 def get_widgets(API_req: req_info):
     mydb = mysql.connector.connect(
         host="appsqldb",
         user="root",
-        password="p@ssw0rd1",
+        password=mysql_pass,
         database="requests_info"
     )
     
