@@ -1,3 +1,6 @@
+### GPU requirement
+
+35GB or more of GPU memory is needed to deploy all AI services. To test the demo with less available GPU memory, one can disable one or both of backend_stable_v2_1/backend_stable_v1_1 services in the docker compose files.
 ### Client Vs Server mode
 
 In this context, "sever" refers to the Mini server. In server deployment mode, AI micro service docker images are build and run alongside minio server microservice on the same node. While, in the client deployment mode, only the AI micro services are built as Docker images, and these micro services will connect to a minIO server running on a different node with the IP address of the node that runs the MINIO service is provided as an environmental variable file.
