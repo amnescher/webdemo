@@ -22,16 +22,27 @@ NOTE: -—env-file specifies the location of the environment variable file, env_
 
 ## Server Deployment.
 
-Step 1: The following commands must be run in order to build and run the docker images before one can deploy web-demo in server mode.
+# Model weights
+Step 1: update path to model/config directory in env_server.env file.
+
+In server deployment mode, model weights and config files need to be uploaded to MINIO buckets once and then can be deployed by AI microservices multipletimes. 
+ Please download these files from [Here](https://eschercloudai-my.sharepoint.com/:f:/g/personal/a_sabet_eschercloud_ai/EiJWs38Yl4FDgyFYrQOhkg4BPoqlLKAhSXlhzBPDgwD18w?e=YLaybW), then set STORAGE_PATH in the env_server.env to downloaded directory.
+ e.g., STORAGE PATH = path/storage/
+
+Step 2: Build docker images for AI micro services and MINIO server.
+
+The following commands must be run in order to build and run the docker images before one can deploy web-demo in server mode.
 
 ```
 sudo docker compose  -f docker-compose-server.yml   --env-file ./env_server.env build
 sudo docker compose  -f docker-compose-server.yml   --env-file ./env_server.env up
 ```
-Runing the above command you will encounter error because the MINIO server was build with alongside AI microservices and these services are not able to connect to MINIO server unless access_key and secert_key are provided. One needs to got to http://localhost:9000/ and generate access_key secret_key and store them in env_server.env file.
 
-Running the above commands will result in errors because the MINIO server was created in conjunction with AI micro services, and these services cannot connect to the MINIO server without access key and secret key. 
+Running the above commands will result in errors because the MINIO server was created in conjunction with AI micro services, but these services cannot connect to the MINIO server without access key and secret key. 
+
+
 Step 2: Generate access key and secret key and restart docker images. 
+
 Open http://localhost:9000/ in your browser and generate an access_key/secret_key pair  and store them in env_server.env file.
 One needs to restart running Docker images in order for them to connect to MINIO server and upload model weights and configuration files. To do this, run the following command in a new terminal window.
 
