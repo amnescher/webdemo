@@ -22,7 +22,6 @@ services:
        - gfpgan_1
        - appsqldb
        - req_db
-       - minio
   backend_stable_v1_1:
     build: 
       context: stablediffusion1
@@ -120,6 +119,15 @@ services:
       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
     volumes:
          - prediction:/prediction
+  appsqldb:
+    image: mysql
+    ports:
+    - 3306:3306
+    environment:
+       MYSQL_ROOT_PASSWORD: p@ssw0rd1_escher_client
+    volumes:
+    - mysql:/var/lib/mysql
+    - mysql_config:/etc/mysql
   req_db:
     build:
       context: db
@@ -133,16 +141,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
     volumes:
       - prediction:/prediction
-  appsqldb:
-    image: mysql
-    ports:
-    - 3306:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
-    volumes:
-    - mysql:/var/lib/mysql
-    - mysql_config:/etc/mysql
-    
+
 volumes:
   mysql:
   mysql_config:
