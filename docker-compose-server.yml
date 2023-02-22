@@ -16,13 +16,36 @@ services:
         secret_key: ${secret_key}
         MINIO_SERVER_IP: ${MINIO_SERVER_IP}
       depends_on:
+       - minio
+       - minio_upload
        - backend_stable_v1_1
        - donut_1
        - backend_stable_v2_1
        - gfpgan_1
        - appsqldb
        - req_db
-       - minio
+  minio:
+    image: minio/minio
+    ports:
+      - 9001:9001
+      - 9000:9000
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server --console-address ":9001" /data
+  minio_upload:
+    build:
+        context: minio_upload
+        network: host
+    command: python build_minIO_bucket.py
+    expose:
+        - "9000"
+    volumes:
+          -  ${STORAGE_PATH}:/storage
+    environment:
+      access_key: ${access_key}
+      secret_key: ${secret_key}
+      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
   backend_stable_v1_1:
     build: 
       context: stablediffusion1
@@ -45,7 +68,6 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-
     volumes:
          - prediction:/prediction
   backend_stable_v2_1:
@@ -141,18 +163,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
     volumes:
     - mysql:/var/lib/mysql
-    - mysql_config:/etc/mysql
-  minio:
-    image: minio/minio
-    ports:
-      - 9001:9001
-      - 9000:9000
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    command: server --console-address ":9001" /data
-
-    
+    - mysql_config:/etc/mysql    
 volumes:
   mysql:
   mysql_config:
