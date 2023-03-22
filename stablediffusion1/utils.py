@@ -60,14 +60,37 @@ def load_files_from_minIO_bucket():
     print("Downloading model from MinIO bucket")
     # Download model's weight from minio bucket and load model weight
     client.fget_object(
-        "modelweight", "storage/model_weights/diff1/model_v1.ckpt", "model_weight"
+        "modelweight", "model_weights/diff1/model_v1.ckpt", "model_weight"
     )
     model = load_model_from_config(config, "model_weight")
     # Download port conf file from minio bucker and load config fie
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
+    # client.fget_object("configdata", "storage/config.yaml", "config_file")
+    # port = OmegaConf.load("config_file")
 
-    return model, config, port
+    return model, config
+
+def load_shared_bucket():
+    load_dotenv()
+    access_key = os.getenv("access_key")
+    secret_key = os.getenv("secret_key")
+
+    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+    
+    client = Minio(
+        f"{minio_server_ip}:9000",
+        access_key=access_key,
+        secret_key=secret_key,secure=False
+    )
+
+    found = client.bucket_exists("diffusion1results")
+
+    if not found:
+        client.make_bucket("diffusion1results")
+
+    return client
+
+
+
 
 
 def diff_model(
@@ -81,6 +104,7 @@ def diff_model(
     seed_num=42,
     n_samples=3,
     n_iter=2,
+    shared_dir = None
 ):
     """
     Returns path to generated images by stable diffudion
@@ -109,6 +133,18 @@ def diff_model(
 
         images = glob.glob(grid_path + "/*.png")
         shutil.make_archive(path, "zip", path)
+        #-------- Writing files to minIO Buckets ------
+        zip_path = path + ".zip"
+        shared_dir.fput_object(
+        "diffusion1results", images[-1], images[-1],
+    )
+        shared_dir.fput_object(
+        "diffusion1results", zip_path, zip_path,
+    )
+        
+        shutil.rmtree(grid_path)
+        os.remove(zip_path)
+        
         return images[-1], path, grid_path
 
     elif mode == "img2img":
@@ -124,9 +160,21 @@ def diff_model(
             input_strength=strength,
             seed_num=seed_num,
             n_samples=n_samples,
-            n_iter=n_iter,
+            n_iter=n_iter
         )
+
         shutil.make_archive(path, "zip", path)
         images = glob.glob(grid_path + "/*.png")
 
+        # --------- Writing results to minIO bucket ----------
+        zip_path = path + ".zip"
+        shared_dir.fput_object(
+        "diffusion1results", images[-1], images[-1],
+    )
+        shared_dir.fput_object(
+        "diffusion1results", zip_path, zip_path,
+    )   
+        
+        shutil.rmtree(grid_path)
+        os.remove(zip_path)
         return images[-1], path, grid_path

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose-server.yml
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: frontend
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: frontend
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose-server.yml
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: frontend
+    spec:
+      containers:
+        - args:
+            - streamlit
+            - run
+            - HOME.py
+          env:
+            - name: DB_IP
+            - name: DOUNAT_IP
+            - name: FACERES_IP
+            - name: MINIO_SERVER_IP
+            - name: STABLE_V1_IP
+            - name: STABLE_V2_IP
+            - name: access_key
+            - name: secret_key
+          image: frontend
+          name: frontend
+          ports:
+            - containerPort: 8501
+            - containerPort: 9000
+          resources: {}
+      restartPolicy: Always
+status: {}

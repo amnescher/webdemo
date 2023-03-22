@@ -9,21 +9,24 @@ services:
         - 8501:8501
       expose:
         - "9000"
-      volumes:
-          -  prediction:/prediction
       environment:
-        access_key: ${access_key}
-        secret_key: ${secret_key}
         MINIO_SERVER_IP: ${MINIO_SERVER_IP}
+        access_key: ${MINIO_ROOT_USER}
+        secret_key: ${MINIO_ROOT_PASSWORD}
+        DOUNAT_IP: ${DOUNAT_IP}
+        STABLE_V1_IP: ${STABLE_V1_IP}
+        STABLE_V2_IP: ${STABLE_V2_IP}
+        FACERES_IP: ${FACERES_IP}
+        DB_IP: ${DB_IP}
       depends_on:
        - minio
        - minio_upload
-       - backend_stable_v1_1
-       - donut_1
+      # - backend_stable_v1_1
+      #  - donut_1
        - backend_stable_v2_1
-       - gfpgan_1
-       - appsqldb
-       - req_db
+      #  - gfpgan_1
+      #  - appsqldb
+      #  - req_db
   minio:
     image: minio/minio
     ports:
@@ -41,40 +44,38 @@ services:
     expose:
         - "9000"
     volumes:
-          -  ${STORAGE_PATH}:/storage
+          - ${STORAGE_PATH}:/storage
     environment:
-      access_key: ${access_key}
-      secret_key: ${secret_key}
+      access_key: ${MINIO_ROOT_USER}
+      secret_key: ${MINIO_ROOT_PASSWORD}
       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-  backend_stable_v1_1:
-    build: 
-      context: stablediffusion1
-      network: host
-    command: conda run --no-capture-output -n ldm python backend.py
-    ports:
-      - 8504:8504
-    expose:
-        - "9000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      access_key: ${access_key}
-      secret_key: ${secret_key}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-      NVIDIA_VISIBLE_DEVICES: all
-      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-    volumes:
-         - prediction:/prediction
+  # backend_stable_v1_1:
+  #   build: 
+  #     context: stablediffusion1
+  #     network: host
+  #   command: conda run --no-capture-output -n ldm python backend.py
+  #   ports:
+  #     - 8504:8504
+  #   expose:
+  #       - "9000"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   environment:
+  #     access_key: ${access_key}
+  #     secret_key: ${secret_key}
+  #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  #     NVIDIA_VISIBLE_DEVICES: all
+  #     MINIO_SERVER_IP: ${MINIO_SERVER_IP}
   backend_stable_v2_1:
     build: 
       context: stablediffusion2
       network: host
-    command:  conda run --no-capture-output -n myenv python backend.py
+    command:  conda run --no-capture-output -n ldm python backend.py
     ports:
       - 8505:8505
     expose:
@@ -87,84 +88,82 @@ services:
               count: 1
               capabilities: [gpu]
     environment:
-      access_key: ${access_key}
-      secret_key: ${secret_key}
+      access_key: ${MINIO_ROOT_USER}
+      secret_key: ${MINIO_ROOT_PASSWORD}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-    volumes:
-         - prediction:/prediction
-  donut_1:
-    build: 
-      context: donut
-      network: host
-    command: python3 backend.py
-    ports:
-      - 8503:8503
-    expose:
-        - "9000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      access_key: ${access_key}
-      secret_key: ${secret_key}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-      NVIDIA_VISIBLE_DEVICES: all
-      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-    volumes:
-         - prediction:/prediction
-  gfpgan_1:
-    build: 
-      context: GFPGAN
-      network: host
-    command: python3 backend.py
-    ports:
-      - 8506:8506
-    expose:
-        - "9000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      access_key: ${access_key}
-      secret_key: ${secret_key}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-      NVIDIA_VISIBLE_DEVICES: all
-      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-    volumes:
-         - prediction:/prediction
-  req_db:
-    build:
-      context: db
-      network: host
-    command: python3 backend.py
-    ports:
-      - 8509:8509
-    expose:
-        - "9000"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
-    volumes:
-      - prediction:/prediction
-  appsqldb:
-    image: mysql
-    ports:
-    - 3306:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
-    volumes:
-    - mysql:/var/lib/mysql
-    - mysql_config:/etc/mysql    
-volumes:
-  mysql:
-  mysql_config:
-  prediction:
+#   donut_1:
+#     build: 
+#       context: donut
+#       network: host
+#     command: python3 backend.py
+#     ports:
+#       - 8503:8503
+#     expose:
+#         - "9000"
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: 1
+#               capabilities: [gpu]
+#     environment:
+#       access_key: ${access_key}
+#       secret_key: ${secret_key}
+#       NVIDIA_DRIVER_CAPABILITIES: compute,utility
+#       NVIDIA_VISIBLE_DEVICES: all
+#       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
+#     volumes:
+#          - prediction:/prediction
+#   gfpgan_1:
+#     build: 
+#       context: GFPGAN
+#       network: host
+#     command: python3 backend.py
+#     ports:
+#       - 8506:8506
+#     expose:
+#         - "9000"
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: 1
+#               capabilities: [gpu]
+#     environment:
+#       access_key: ${access_key}
+#       secret_key: ${secret_key}
+#       NVIDIA_DRIVER_CAPABILITIES: compute,utility
+#       NVIDIA_VISIBLE_DEVICES: all
+#       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
+#     volumes:
+#          - prediction:/prediction
+#   req_db:
+#     build:
+#       context: db
+#       network: host
+#     command: python3 backend.py
+#     ports:
+#       - 8509:8509
+#     expose:
+#         - "9000"
+#     environment:
+#       MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
+#     volumes:
+#       - prediction:/prediction
+#   appsqldb:
+#     image: mysql
+#     ports:
+#     - 3306:3306
+#     environment:
+#       MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
+#     volumes:
+#     - mysql:/var/lib/mysql
+#     - mysql_config:/etc/mysql    
+# volumes:
+#   mysql:
+#   mysql_config:
+#   prediction:

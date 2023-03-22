@@ -17,29 +17,25 @@ from minio import Minio
 from minio.error import S3Error
 from omegaconf import OmegaConf
 
+def delete_minIO_Folder(minioClient,bucketname, folderName):
+    # Delete using "remove_object"
+    objects_to_delete = minioClient.list_objects(bucketname, prefix=folderName, recursive=True)
+    for obj in objects_to_delete:
+        minioClient.remove_object(bucketname, obj.object_name)
 
-def load_config_port():
-    """
-    Returns a loaded yaml config file that includes port names of other microservices to send requests to
-    config file is downloaded from a minio bucket
-    """
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_key = os.getenv("secret_key")
-    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
-    
-    client = Minio(
-        f"{minio_server_ip}:9000",
-        access_key=access_key,
-        secret_key=secret_key,secure=False
-    )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port
+load_dotenv()
+port_config = os.getenv("STABLE_V1_IP")
 
 
-port_config = load_config_port()
+access_key = os.getenv("access_key")
+secret_key = os.getenv("secret_key")
+minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+
+client = Minio(
+    f"{minio_server_ip}:9000",
+    access_key=access_key,
+    secret_key=secret_key,secure=False
+)
 
 
 # ------------ Info Page --------------
@@ -104,30 +100,40 @@ if app_mode == "Image Generation":
 
         with st.spinner("Generating ..."):
             # Send reuest
-            try:
+        
                 response = requests.post(
-                    f"http://{port_config.model_ports.stablediff1[-1]}:8504/txt2img",
+                    f"http://{port_config}:8504/txt2img",
                     data=json.dumps(payload),
                 )
                 # process response
                 response = response.json()
+                
                 zip_path = response["response"]["path"]
                 grid_path = response["response"]["grid_path"]
+
+                image_from_bucket = response["response"]["image"]
+                zip_file_bucket = response["response"]["path"] + ".zip"
+
+                client.fget_object(
+                        "diffusion1results", image_from_bucket, "grid_image"
+                    )
+                client.fget_object(
+                        "diffusion1results", zip_file_bucket, "zip_file"
+                    )
+                st.image("grid_image")
                 st.success("Successful!")
-                st.image(Image.open(response["response"]["image"]))
                 # enable user to download the generated image in a zip file
-                with open(zip_path + ".zip", "rb") as file:
+                with open("zip_file", "rb") as file:
                     btn = st.download_button(
                         label="Download Samples",
                         data=file,
                         file_name=zip_path + ".zip",
                     )
-                shutil.rmtree(zip_path)
-                shutil.rmtree(grid_path)
-                os.remove(zip_path + ".zip")
+                # --- delete results from minIO storage --------
+                delete_minIO_Folder(client,"diffusion1results",grid_path)
+                client.remove_object("diffusion1results",zip_file_bucket)
 
-            except Exception:
-                st.error("Unsuccessful. Encountered an error. Try again!", icon="🚨")
+            
 
 # ----------------------- image to image page------------------------
 elif app_mode == "Image Modification":
@@ -185,9 +191,9 @@ elif app_mode == "Image Modification":
             }
             with st.spinner("Generating ..."):
 
-                try:
+               
                     response = requests.post(
-                        f"http://{port_config.model_ports.stablediff1[-1]}:8504/img2img",
+                        f"http://{port_config}:8504/img2img",
                         params=payload,
                         files=files,
                     )
@@ -195,25 +201,30 @@ elif app_mode == "Image Modification":
                     response = response.json()
                     zip_path = response["response"]["path"]
                     grid_path = response["response"]["grid_path"]
+
+                    image_from_bucket = response["response"]["image"]
+                    zip_file_bucket = response["response"]["path"] + ".zip"
+
+                    client.fget_object(
+                            "diffusion1results", image_from_bucket, "grid_image"
+                        )
+                    client.fget_object(
+                            "diffusion1results", zip_file_bucket, "zip_file"
+                        )
+                    st.image("grid_image")
                     st.success("Successful!")
-                    st.image(Image.open(response["response"]["image"]))
-                    # enable user to download generated image
-                    with open(zip_path + ".zip", "rb") as file:
+                    # enable user to download the generated image in a zip file
+                    with open("zip_file", "rb") as file:
                         btn = st.download_button(
                             label="Download Samples",
                             data=file,
                             file_name=zip_path + ".zip",
                         )
-                    # delete generated images/directory to save space
-                    shutil.rmtree(zip_path)
-                    shutil.rmtree(grid_path)
-                    os.remove(zip_path + ".zip")
+                    # --- delete results from minIO storage --------
+                    delete_minIO_Folder(client,"diffusion1results",grid_path)
+                    client.remove_object("diffusion1results",zip_file_bucket)
 
-                except Exception:
-                    st.error(
-                        "Unsuccessful. Encountered an error. Please try again!",
-                        icon="🚨",
-                    )
+                
 
 # -------------------- Exploring page that shows examples generated by stable diffusion
 elif app_mode == "Exploring":

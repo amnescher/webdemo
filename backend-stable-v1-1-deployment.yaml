@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose-server.yml
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: backend-stable-v1-1
+  name: backend-stable-v1-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: backend-stable-v1-1
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose-server.yml
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: backend-stable-v1-1
+    spec:
+      containers:
+        - args:
+            - conda
+            - run
+            - --no-capture-output
+            - -n
+            - ldm
+            - python
+            - backend.py
+          env:
+            - name: MINIO_SERVER_IP
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: access_key
+            - name: secret_key
+          image: backend-stable-v1-1
+          name: backend_stable_v1_1
+          ports:
+            - containerPort: 8504
+            - containerPort: 9000
+          resources: {}
+      restartPolicy: Always
+status: {}

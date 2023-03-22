@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Query
 from inference_gfpgan import inference
 import PIL.Image as Image
-from utils import load_config_port
+from stablediffusion1.utils import load_config_port
 import uuid
 import os 
 import shutil 

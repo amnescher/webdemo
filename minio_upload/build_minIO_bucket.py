@@ -17,40 +17,41 @@ def main():
     
     client = Minio(
         f"{minio_server_ip}:9000",
-        access_key=access_key,
-        secret_key=secret_key,secure=False
+        access_key = access_key,
+        secret_key = secret_key,
+        secure=False
     )
 
 
     # # Make 'asiatrip' bucket if not exist.
+
+    if os.path.isfile("/storage/model_weights/diff2/model_v2_768.ckpt"):
+        print("Found model Weights")
+    else: 
+        print("Not Found Directory")
+
     found = client.bucket_exists("modelweight")
-
-    if found:
-        print ("Bucket 'modelweight' already exists")
+    
+    if not found:
+            client.make_bucket("modelweight")
+            print("Bucket Made")
     else:
-        client.make_bucket("modelweight")
-        client.fput_object(
-        "modelweight", "storage/model_weights/diff2/model_v2_768.ckpt", "/storage/model_weights/diff2/model_v2_768.ckpt",
-    )
-        client.fput_object(
-        "modelweight", "storage/model_weights/diff2/512-inpainting-ema.ckpt", "/storage/model_weights/diff2/512-inpainting-ema.ckpt",
-    )
-        client.fput_object(
-        "modelweight", "storage/model_weights/diff2/x4-upscaler-ema.ckpt", "/storage/model_weights/diff2/x4-upscaler-ema.ckpt",
-    )
-        client.fput_object(
-        "modelweight", "storage/model_weights/GFPGAN/GFPGANv1.3.pth", "/storage/model_weights/GFPGAN/GFPGANv1.3.pth",
-    )
+         print("Bucket Found")
+    
+    client.fput_object(
+    "modelweight", "model_weights/diff2/model_v2_768.ckpt", "/storage/model_weights/diff2/model_v2_768.ckpt",
+)
+    client.fput_object(
+    "modelweight", "model_weights/diff2/512-inpainting-ema.ckpt", "/storage/model_weights/diff2/512-inpainting-ema.ckpt",
+)
+    client.fput_object(
+    "modelweight", "model_weights/diff2/x4-upscaler-ema.ckpt", "/storage/model_weights/diff2/x4-upscaler-ema.ckpt",
+)
+    client.fput_object(
+    "modelweight", "model_weights/GFPGAN/GFPGANv1.3.pth", "/storage/model_weights/GFPGAN/GFPGANv1.3.pth",
+)
 
-    found = client.bucket_exists("configdata")
-    if found:
-        print("Bucket 'config_data' already exists")
-    else:
-        client.make_bucket("configdata")
-        client.fput_object(
-        "configdata", "storage/config.yaml", "/storage/config.yaml",
-    )
-        
+
 
     
 

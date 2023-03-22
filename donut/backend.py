@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 from typing import List
 import config
-from utils import donut_app,load_config_port
+from stablediffusion1.utils import donut_app,load_config_port
 import requests
 
 

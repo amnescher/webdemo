@@ -21,26 +21,29 @@ from omegaconf import OmegaConf
 
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 #Read port config file
-def load_config_port():
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_key = os.getenv("secret_key")
-    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
-    
-    client = Minio(
-        f"{minio_server_ip}:9000",
-        access_key=access_key,
-        secret_key=secret_key,secure=False
-    )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port
+
+def delete_minIO_Folder(minioClient,bucketname, folderName):
+    # Delete using "remove_object"
+    objects_to_delete = minioClient.list_objects(bucketname, prefix=folderName, recursive=True)
+    for obj in objects_to_delete:
+        minioClient.remove_object(bucketname, obj.object_name)
 
 
-#add_bg_from_local("/home/storage/frontend/logo.jpeg")
+load_dotenv()
+port_config = os.getenv("STABLE_V2_IP")
 
-port_config = load_config_port()
+
+access_key = os.getenv("access_key")
+secret_key = os.getenv("secret_key")
+minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+
+client = Minio(
+    f"{minio_server_ip}:9000",
+    access_key=access_key,
+    secret_key=secret_key,secure=False
+)
+
+
 
 st.sidebar.header("Select a demo")
 app_mode = st.sidebar.selectbox(
@@ -102,9 +105,9 @@ if app_mode == "Image Generation":
         }
         with st.spinner("Generating ..."):
             
-            try:
+            # try:
                 res = requests.post(
-                    f"http://{port_config.model_ports.stablediff2[-1]}:8505/txt2img",
+                    f"http://{port_config}:8505/txt2img",
                     data=json.dumps(payload),
                 )
                 
@@ -112,22 +115,35 @@ if app_mode == "Image Generation":
                 response = res.json()
                 zip_path = response["response"]["path"]
                 grid_path = response["response"]["grid_path"]
+
+                image_from_bucket = response["response"]["image"]
+                zip_file_bucket = response["response"]["path"] + ".zip"
+
+                
+
+                client.fget_object(
+                        "diffusion2results", image_from_bucket, "grid_image"
+                    )
+                client.fget_object(
+                        "diffusion2results", zip_file_bucket, "zip_file"
+                    )
+                
+                st.image(Image.open("grid_image"))
                 st.success('Successful!')
-                st.image(Image.open(response["response"]["image"]))
 
                 # enable user to download generated images
-                with open(zip_path + ".zip", "rb") as file:
+                with open("zip_file", "rb") as file:
                     btn = st.download_button(
                         label="Download Samples",
                         data=file,
                         file_name=zip_path + ".zip",
                     )
-                    # delete generated files/directories
-                shutil.rmtree(zip_path)
-                shutil.rmtree(grid_path)
-                os.remove(zip_path + ".zip")
-            except Exception:
-                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
+                # --- delete results from minIO storage --------
+                delete_minIO_Folder(client,"diffusion2results",grid_path)
+                client.remove_object("diffusion2results",zip_file_bucket)
+
+            # except Exception:
+            #     st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
             
 
             
@@ -193,7 +209,7 @@ elif app_mode == "Image Modification":
                 
                 try:
                     res = requests.post(
-                        f"http://{port_config.model_ports.stablediff2[-1]}:8505/img2img",
+                        f"http://{port_config}:8505/img2img",
                         params=payload,
                         files=files,
                     )
@@ -203,22 +219,31 @@ elif app_mode == "Image Modification":
                     response = res.json()
                     zip_path = response["response"]["path"]
                     grid_path = response["response"]["grid_path"]
-                    st.success('Successful!')
-                
+                    image_from_bucket = response["response"]["image"]
+                    zip_file_bucket = response["response"]["path"] + ".zip"
 
-               
-                    st.image(Image.open(response["response"]["image"]))
-                    # enable user to download generated images 
-                    with open(zip_path + ".zip", "rb") as file:
+                    
+
+                    client.fget_object(
+                            "diffusion2results", image_from_bucket, "grid_image"
+                        )
+                    client.fget_object(
+                            "diffusion2results", zip_file_bucket, "zip_file"
+                        )
+                    
+                    st.image(Image.open("grid_image"))
+                    st.success('Successful!')
+
+                    # enable user to download generated images
+                    with open("zip_file", "rb") as file:
                         btn = st.download_button(
                             label="Download Samples",
                             data=file,
                             file_name=zip_path + ".zip",
                         )
-                        # delete generated images and directories
-                    shutil.rmtree(zip_path)
-                    shutil.rmtree(grid_path)
-                    os.remove(zip_path + ".zip")
+                    # --- delete results from minIO storage --------
+                    delete_minIO_Folder(client,"diffusion2results",grid_path)
+                    client.remove_object("diffusion2results",zip_file_bucket)
                 except Exception:
                     st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
                 
@@ -274,29 +299,36 @@ elif app_mode == "Upscaling":
                 
                 try:
                     res = requests.post(
-                        f"http://{port_config.model_ports.stablediff2[-1]}:8505/upscale",
+                        f"http://{port_config}:8505/upscale",
                         params=payload,
                         files=files,
                     )
 
                     response = res.json()
                 # get the response back that includes path to generated image
-                    zip_path = response["response"]["image"]
+                    response_path = response["response"]["image"]
+                    directory_path = response_path + "/"
+                    zip_file_bucket = response_path + ".zip"
+                    objects_in_dir = client.list_objects("diffusion2results", prefix=directory_path, recursive=True)
+                    for obj in objects_in_dir:
+                        client.fget_object(
+                            "diffusion2results", obj.object_name, "grid_image"
+                        )
+                        st.image(Image.open("grid_image"))
                     st.success('Successful!')
-                    filename_list = glob(os.path.join(zip_path, "*.png"))
-                    for filename in filename_list:
-                        im = Image.open(filename)
-                        st.image(im)
+                    client.fget_object(
+                            "diffusion2results", zip_file_bucket, "zip_file"
+                        )
                     # enable users to download generated images
-                    with open(zip_path + ".zip", "rb") as file:
+                    with open("zip_file", "rb") as file:
                         btn = st.download_button(
                             label="Download Samples",
                             data=file,
-                            file_name=zip_path + ".zip",
+                            file_name=zip_file_bucket,
                         )
-                    # delete generated images and directories
-                    shutil.rmtree(zip_path)
-                    os.remove(zip_path + ".zip")
+                    delete_minIO_Folder(client,"diffusion2results",response_path)
+                    client.remove_object("diffusion2results",zip_file_bucket)
+                    
                 except Exception:
                     st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
 
@@ -305,6 +337,7 @@ elif app_mode == "Upscaling":
 
 
 # -------------------------------------------   INpainting --------------
+
 
 
 
@@ -353,14 +386,13 @@ elif app_mode == "Inpainting":
                 drawing_mode=drawing_mode,
                 key="canvas",
             )
-            if canvas_result:
+            if canvas_result.image_data is not None:
                 mask = canvas_result.image_data
-                
                 mask = mask[:, :, -1] > 0
                 if mask.sum() > 0:
                     mask = Image.fromarray(mask)
-                    mask_name = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_"+str(seed)) + "_mask.png"
-                    image_name = os.path.join("/prediction", "samples"+"_"+str(uuid.uuid4())+"_"+str(seed)) + "_image.png"
+                    mask_name =  "samples"+"_"+str(uuid.uuid4())+"_"+str(seed) + "_mask.png"
+                    image_name =  "samples"+"_"+str(uuid.uuid4())+"_"+str(seed) + "_image.png"
                     mask.save(mask_name, "PNG")
                     image.convert("RGB").save(image_name, "PNG")
                     files = [
@@ -379,36 +411,38 @@ elif app_mode == "Inpainting":
                     run = st.button("Generate")
                     if run:
                         with st.spinner("Generating ..."):
-                            
-                            try:
                                 res = requests.post(
             
-                                    f"http://{port_config.model_ports.stablediff2[-1]}:8505/Inpainting",
+                                    f"http://{port_config}:8505/Inpainting",
                                     params=payload,
                                     files=files,
                                 )
                                 response = res.json()
             
                             # get the response back that includes path to generated image
-                                zip_path = response["response"]["image"]
+                                response_path = response["response"]["image"]
+                                directory_path = response_path + "/"
+                                zip_file_bucket = response_path + ".zip"
+                                objects_in_dir = client.list_objects("diffusion2results", prefix=directory_path, recursive=True)
+                                for obj in objects_in_dir:
+                                    client.fget_object(
+                                        "diffusion2results", obj.object_name, "grid_image"
+                                    )
+                                    st.image(Image.open("grid_image"))
                                 st.success('Successful!')
-                            
-                                filename_list = glob(os.path.join(zip_path, "*.png"))
-                                for filename in filename_list:
-                                    im = Image.open(filename)
-                                    st.image(im)
+                                client.fget_object(
+                                        "diffusion2results", zip_file_bucket, "zip_file"
+                                    )
                                 # enable users to download generated images
-                                with open(zip_path + ".zip", "rb") as file:
+                                with open("zip_file", "rb") as file:
                                     btn = st.download_button(
                                         label="Download Samples",
                                         data=file,
-                                        file_name=zip_path + ".zip",
+                                        file_name=zip_file_bucket,
                                     )
-                                # delete generated images and directories
-                                shutil.rmtree(zip_path)
-                                os.remove(zip_path + ".zip")
+                                delete_minIO_Folder(client,"diffusion2results",response_path)
+                                client.remove_object("diffusion2results",zip_file_bucket)
                                 os.remove(image_name)
                                 os.remove(mask_name)
-                            except Exception:
-                                st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
-                            
+                            # except Exception:
+                            #     st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")

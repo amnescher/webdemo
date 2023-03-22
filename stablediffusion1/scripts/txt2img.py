@@ -112,7 +112,7 @@ def txt2img_infer(input_prompt, model=None, config=None, input_plms=True,dim = (
         type=str,
         nargs="?",
         help="dir to write results to",
-        default="/prediction"
+        default="/home/prediction"
     )
     parser.add_argument(
         "--skip_grid",
@@ -244,6 +244,8 @@ def txt2img_infer(input_prompt, model=None, config=None, input_plms=True,dim = (
     else: 
         config = config 
         model=model
+    if torch.cuda.is_available():
+        print("********************* GPU In Use ****************")
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)

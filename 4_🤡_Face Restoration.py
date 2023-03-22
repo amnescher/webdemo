@@ -17,27 +17,9 @@ from minio.error import S3Error
 from omegaconf import OmegaConf
 
 
-def load_config_port():
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_key = os.getenv("secret_key")
-    
-    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
-    
-    client = Minio(
-        f"{minio_server_ip}:9000",
-        access_key=access_key,
-        secret_key=secret_key,secure=False
-    )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port
+load_dotenv()
+port_config = os.getenv("FACERES_IP")
 
-
-#add_bg_from_local("/home/storage/frontend/logo.jpeg")
-
-port_config = load_config_port()
 
 st.sidebar.header("Select a demo")
 
@@ -84,7 +66,7 @@ if app_mode == "Face Restoration":
             with st.spinner("Generating ..."):
                 start = time.time()
                 res = requests.post(
-                    f"http://{port_config.model_ports.gfpgan[-1]}:8506/Restoration",
+                    f"http://{port_config}:8506/Restoration",
                     params=payload,
                     files=files,
                 )
@@ -96,15 +78,7 @@ if app_mode == "Face Restoration":
                 image_path = response["response"]["image"]
                 result_path = response["response"]["path"]
                 st.success('Successful!')
-                payload = {
-                    "req_type": "Face Restoration",
-                    "runtime": (end - start)
-                    }
                     
-                db_req = requests.post(
-                        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-                        data=json.dumps(payload),
-                    )                
                 st.image(Image.open(image_path))
                 cmp_list = glob(os.path.join(cmp_path, "*.png"))
                 st.info("Left: Before face restoration.    Right: After face restoration.", icon="ℹ️")

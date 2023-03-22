@@ -6,7 +6,7 @@ from typing import List, Union, Optional
 from pydantic import BaseModel
 from fastapi import FastAPI, Query
 from utils import diff_model
-from utils import load_files_from_minIO_bucket
+from utils import load_files_from_minIO_bucket, load_shared_bucket
 from omegaconf import OmegaConf
 import requests
 import time
@@ -14,18 +14,12 @@ import json
 
 
 # download model weights from minio bucket and load model weights into GPU mem, load model config, download port config file from minio and return config file
-model_v1, config_v1, port_config = load_files_from_minIO_bucket()
+model_v1, config_v1 = load_files_from_minIO_bucket()
 
-# initialise database to store requrests information
-try:
-    requests.post(f"http://{port_config.model_ports.db[-1]}:8509/initdb")
-except:
-    print("database initialization failed")
-
-
+# initialise minIO buckets for sending results to frontend
+minIO_clinet = load_shared_bucket()
 # Initiate fast api
 app = FastAPI()
-
 
 @app.get("/")
 def read_root():
@@ -58,21 +52,10 @@ def read_items(API_req: txt2img_req):
         seed_num=API_req.seed,
         n_samples=API_req.samples,
         n_iter=API_req.n_iter,
+        shared_dir = minIO_clinet
     )
     end = time.time()
-
-    # save request information in the database
-    request_info = {
-        "req_type": "Stable Diffusion version1 - txt2img",
-        "prompt": API_req.prompt,
-        "runtime": (end - start),
-    }
-    # sending insert request to database microservice
-    requests.post(
-        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-        data=json.dumps(request_info),
-    )
-
+    print(" Runtime--------->",(end - start))
     return {"response": {"image": image_path, "path": path, "grid_path": grid_path}}
 
 
@@ -89,9 +72,8 @@ class img2img_req(BaseModel):
 @app.post("/img2img")
 def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
     request = req.dict()
-
-    # generating images by the stable diffusion and return paths to generated images
     start = time.time()
+    # generating images by the stable diffusion and return paths to generated images
     image_path, path, grid_path = diff_model(
         prompt=request["prompt"],
         mode="txt2img",
@@ -102,20 +84,11 @@ def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
         seed_num=request["seed"],
         n_samples=request["samples"],
         n_iter=request["n_iter"],
+        shared_dir = minIO_clinet
     )
     end = time.time()
-
-    # save request information in the database
-    request_info = {
-        "req_type": "Stable Diffusion version1 - img2img",
-        "prompt": request["prompt"],
-        "runtime": (end - start),
-    }
+    print(" Runtime--------->",(end - start))
     # sending insert request to database microservice
-    requests.post(
-        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-        data=json.dumps(request_info),
-    )
 
     return {"response": {"image": image_path, "path": path, "grid_path": grid_path}}
 

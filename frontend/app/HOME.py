@@ -12,31 +12,16 @@ from minio import Minio
 from minio.error import S3Error
 from omegaconf import OmegaConf
 
-def load_config_port():
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_key = os.getenv("secret_key")
-    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
-    
-    client = Minio(
-        f"{minio_server_ip}:9000",
-        access_key=access_key,
-        secret_key=secret_key,secure=False
-    )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port
+
+load_dotenv()
+port_config = os.getenv("DB_IP")
 
 
-#add_bg_from_local("/home/storage/frontend/logo.jpeg")
-
-port_config = load_config_port()
 # Load background images
 #add_bg_from_local("storage/frontend/logo.jpeg")
-image_id = Image.open("images/id.png")
-image_stablediff = Image.open("images/butterfly.jpeg")
-image_faceResto = Image.open("images/faceresto.jpeg")
+image_id = Image.open("app/images/id.png")
+image_stablediff = Image.open("app/images/butterfly.jpeg")
+image_faceResto = Image.open("app/images/faceresto.jpeg")
 
 # Page title
 st.write("# ESCERCLOUD AI Computer Vision Services - Demo! 👋")
@@ -73,7 +58,7 @@ elif app_mode == "History":
     password = st.text_input("Enter a password", type="password")
     if password == "@idem0":
         db_req = requests.post(
-                            f"http://{port_config.model_ports.db[-1]}:8509/widgets"
+                            f"http://{port_config}:8509/widgets"
                         )
         db_req = db_req.json()
         df = pd.DataFrame.from_records(db_req["data"])
