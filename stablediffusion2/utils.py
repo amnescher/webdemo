@@ -30,6 +30,7 @@ def diff_model(
     eta = 0,
     scale =9,
     steps = 50,
+    shared_dir = None
 ):
 
     if mode == "txt2img":
@@ -42,10 +43,23 @@ def diff_model(
             seed_num=seed_num,
             n_samples=num_samples,
             n_iter=n_iter,
+            
         )
 
         images = glob.glob(grid_path + "/*.png")
         shutil.make_archive(path, "zip", path)
+
+        #-------- Writing files to minIO Buckets ------
+        zip_path = path + ".zip"
+        shared_dir.fput_object(
+        "diffusion2results", images[-1], images[-1],
+    )
+        shared_dir.fput_object(
+        "diffusion2results", zip_path, zip_path,
+    )
+        shutil.rmtree(grid_path)
+        os.remove(zip_path)
+
         return images[-1], path, grid_path
 
     elif mode == "img2img":
@@ -62,15 +76,35 @@ def diff_model(
         )
         shutil.make_archive(path, "zip", path)
         images = glob.glob(grid_path + "/*.png")
+
+        # --------- Writing results to minIO bucket ----------
+        zip_path = path + ".zip"
+        shared_dir.fput_object(
+        "diffusion2results", images[-1], images[-1],
+    )
+        shared_dir.fput_object(
+        "diffusion2results", zip_path, zip_path,
+    )
+
         return images[-1], path, grid_path
         
     elif mode == "upscaling":
-        path = inference(image_path,prompt,seed_num,scale,steps,eta,num_samples,sampler=model)
+        path = inference(image_path,prompt,seed_num,scale,steps,eta,num_samples,sampler=model,shared_dir = shared_dir)
         shutil.make_archive(path, "zip", path)
+        zip_path = path + ".zip"
+        shared_dir.fput_object(
+        "diffusion2results", zip_path, zip_path,
+    )
+        shutil.rmtree(path)
         return  path
     elif mode == "Inpainting":
-        path = inpainting(image_path,mask,prompt,seed_num,scale,steps,num_samples,eta,sampler=model)
+        path = inpainting(image_path,mask,prompt,seed_num,scale,steps,num_samples,eta,sampler=model,shared_dir = shared_dir)
         shutil.make_archive(path, "zip", path)
+        zip_path = path + ".zip"
+        shared_dir.fput_object(
+        "diffusion2results", zip_path, zip_path,
+    )
+        shutil.rmtree(path)
         return  path
 
 
@@ -119,9 +153,9 @@ def load_files_from_minIO_bucket():
     
     print("uploading model weights from MinIO bucket")
     # download model weights for txt2img/img2img, superresolution, and in-painting models from minio
-    client.fget_object("modelweight", "storage/model_weights/diff2/model_v2_768.ckpt", "model_weight_gen")
-    client.fget_object("modelweight", "storage/model_weights/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
-    client.fget_object("modelweight", "storage/model_weights/diff2/512-inpainting-ema.ckpt", "model_weight_inpainting")
+    client.fget_object("modelweight", "/model_weights/diff2/model_v2_768.ckpt", "model_weight_gen")
+    client.fget_object("modelweight", "/model_weights/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
+    client.fget_object("modelweight", "/model_weights/diff2/512-inpainting-ema.ckpt", "model_weight_inpainting")
     print("model successfully downloaded!")
     #load model config for txt2img/img2img
     config_gen = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")
@@ -130,26 +164,30 @@ def load_files_from_minIO_bucket():
     model_upScale = initialize_model("configs/stable-diffusion/x4-upscaling.yaml", "model_weight_scaling")
     model_inpainting = initialize_model("configs/stable-diffusion/v2-inpainting-inference.yaml", "model_weight_inpainting")
 
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    
-    return model_gen, config_gen,model_upScale,model_inpainting, port
     
     
-def load_config_port():
-    #Connect to MINio bucket to download config file
+    return model_gen, config_gen,model_upScale,model_inpainting
+    
+
+def load_shared_bucket():
     load_dotenv()
     access_key = os.getenv("access_key")
     secret_key = os.getenv("secret_key")
 
+    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+    
     client = Minio(
-        "minio:9000",
+        f"{minio_server_ip}:9000",
         access_key=access_key,
         secret_key=secret_key,secure=False
     )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port
+
+    found = client.bucket_exists("diffusion2results")
+
+    if not found:
+        client.make_bucket("diffusion2results")
+
+    return client
+
 
 

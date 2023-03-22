@@ -12,10 +12,8 @@ from streamlit_drawable_canvas import st_canvas
 from imwatermark import WatermarkEncoder
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.util import instantiate_from_config
-
-
 torch.set_grad_enabled(False)
-
+import shutil
 
 def put_watermark(img, wm_encoder=None):
     if wm_encoder is not None:
@@ -197,7 +195,7 @@ def inpainting(image,
                     seed,
                     scale,
                     ddim_steps,
-                    num_samples, eta,sampler=None):
+                    num_samples, eta,sampler=None, shared_dir = None):
     image = Image.open(image)
     w, h = image.size
     result = inpaint(
@@ -214,9 +212,13 @@ def inpainting(image,
                     eta=eta
                 )
     
-    outpath = "/prediction"
+    outpath = "prediction"
     sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed))
     os.makedirs(sample_path, exist_ok=True)
     for base_count,image in enumerate(result):
-        image.save(os.path.join(sample_path, f"{base_count:05}.png"))
+        save_path = os.path.join(sample_path, f"{base_count:05}.png")
+        image.save(save_path)
+        shared_dir.fput_object(
+        "diffusion2results", save_path, save_path,
+    )  
     return sample_path

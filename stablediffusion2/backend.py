@@ -5,7 +5,6 @@ import config
 from typing import List, Union, Optional
 from pydantic import BaseModel
 from fastapi import FastAPI, Query
-from utils import diff_model
 import PIL.Image as Image
 import uuid
 import traceback
@@ -13,7 +12,7 @@ from omegaconf import OmegaConf
 import requests
 import json
 import torch
-from utils import load_files_from_minIO_bucket
+from utils import diff_model, load_files_from_minIO_bucket,load_shared_bucket
 from omegaconf import OmegaConf
 import requests
 import numpy as np
@@ -27,14 +26,15 @@ import time
     config_v2,
     model_v2_up,
     model_v2_paint,
-    port_config,
 ) = load_files_from_minIO_bucket()
 
+minIO_clinet = load_shared_bucket()
+
 # initialise database to store requrests information
-try:
-    requests.post(f"http://{port_config.model_ports.db[-1]}:8509/initdb")
-except:
-    print("database initialization failed")
+# try:
+#     requests.post(f"http://{port_config.model_ports.db[-1]}:8509/initdb")
+# except:
+#     print("database initialization failed")
 
 
 # Initiate fast api
@@ -72,6 +72,7 @@ def read_items(API_req: txt2img_req):
         seed_num=API_req.seed,
         num_samples=API_req.samples,
         n_iter=API_req.n_iter,
+        shared_dir = minIO_clinet
     )
     end = time.time()
 
@@ -82,10 +83,10 @@ def read_items(API_req: txt2img_req):
         "runtime": (end - start),
     }
     # sending insert request to database microservice
-    requests.post(
-        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-        data=json.dumps(request_info),
-    )
+    # requests.post(
+    #     f"http://{port_config.model_ports.db[-1]}:8509/insert",
+    #     data=json.dumps(request_info),
+    # )
 
     return {"response": {"image": image_path, "path": path, "grid_path": grid_path}}
 
@@ -119,6 +120,7 @@ def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
         seed_num=request["seed"],
         num_samples=request["samples"],
         n_iter=request["n_iter"],
+        shared_dir = minIO_clinet
     )
     end = time.time()
     # save request information in the database
@@ -128,10 +130,11 @@ def submit(req: img2img_req = Depends(), files: UploadFile = File(...)):
         "runtime": (end - start),
     }
     # sending insert request to database microservice
-    requests.post(
-        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-        data=json.dumps(request_info),
-    )
+    # requests.post(
+    #     f"http://{port_config.model_ports.db[-1]}:8509/insert",
+    #     data=json.dumps(request_info),
+    # )
+    
     return {"response": {"image": image_path, "path": path, "grid_path": grid_path}}
 
 
@@ -152,20 +155,21 @@ class superresolution_req(BaseModel):
 def submit(req: superresolution_req = Depends(), files: UploadFile = File(...)):
     request = req.dict()
     uploaded_image = Image.open(files.file)
-    image_path = f"/prediction/{str(uuid.uuid4())}.jpg"
-    uploaded_image.convert("RGB").save(image_path)
+    input_image_path = f"prediction/{str(uuid.uuid4())}.jpg"
+    uploaded_image.convert("RGB").save(input_image_path)
     start = time.time()
     image_path = diff_model(
         prompt=request["prompt"],
         mode="upscaling",
         model=model_v2_up,
         config=None,
-        image_path=image_path,
+        image_path=input_image_path,
         seed_num=request["seed"],
         num_samples=request["samples"],
         steps=request["steps"],
         eta=request["eta"],
         scale=request["scale"],
+        shared_dir = minIO_clinet
     )
     end = time.time()
     # save request information in the database
@@ -175,10 +179,12 @@ def submit(req: superresolution_req = Depends(), files: UploadFile = File(...)):
         "runtime": (end - start),
     }
     # sending insert request to database microservice
-    requests.post(
-        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-        data=json.dumps(request_info),
-    )
+    # requests.post(
+    #     f"http://{port_config.model_ports.db[-1]}:8509/insert",
+    #     data=json.dumps(request_info),
+    # )
+    
+    os.remove(input_image_path)
     return {"response": {"image": image_path}}
 
 
@@ -193,7 +199,7 @@ def submit(req: superresolution_req = Depends(), files: List[UploadFile] = File(
     mask = Image.open(files[1].file)
 
     input_image_path = os.path.join(
-        "/prediction", "samples" + "_" + str(uuid.uuid4()) + "_image.jpg"
+        "prediction", "samples" + "_" + str(uuid.uuid4()) + "_image.jpg"
     )
     uploaded_image.save(input_image_path)
     start = time.time()
@@ -209,6 +215,7 @@ def submit(req: superresolution_req = Depends(), files: List[UploadFile] = File(
         steps=request["steps"],
         eta=request["eta"],
         scale=request["scale"],
+        shared_dir = minIO_clinet
     )
     end = time.time()
     os.remove(input_image_path)
@@ -220,10 +227,10 @@ def submit(req: superresolution_req = Depends(), files: List[UploadFile] = File(
         "runtime": (end - start),
     }
     # sending insert request to database microservice
-    requests.post(
-        f"http://{port_config.model_ports.db[-1]}:8509/insert",
-        data=json.dumps(request_info),
-    )
+    # requests.post(
+    #     f"http://{port_config.model_ports.db[-1]}:8509/insert",
+    #     data=json.dumps(request_info),
+    # )
 
     return {"response": {"image": image_path}}
 

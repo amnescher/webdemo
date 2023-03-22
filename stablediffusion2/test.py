@@ -5,7 +5,7 @@ import config
 from typing import List, Union,Optional
 from pydantic import BaseModel
 from fastapi import FastAPI, Query
-from utils import diff_model
+from stablediffusion1.utils import diff_model
 import PIL.Image as Image
 import uuid
 import traceback
@@ -15,7 +15,7 @@ import json
 import time
 import torch 
 
-from utils import load_model, diff_model
+from stablediffusion1.utils import load_model, diff_model
 
 
 model_v2, config_v2, model_v2_up,model_v2_paint = load_model()

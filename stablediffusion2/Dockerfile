@@ -1,25 +1,17 @@
-FROM nvidia/cuda:11.3.1-devel-ubuntu20.04
-
-RUN apt-get update
-RUN apt install  -y python3-pip
+FROM python:3.7-slim-buster
 ENV TZ Europe/London
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6 && \
-    apt-get install -y wget &&\
-    apt-get -y install git &&\
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-RUN apt-get update
-RUN apt-get install ffmpeg libsm6 libxext6  -y
-# Install miniconda
-
 ENV home /opt/conda
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libglib2.0-0 ffmpeg libsm6 libxrender1 libxext6 wget git && \
+    rm -rf /var/lib/apt/lists/*
+# Install miniconda
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda 
 # Put conda in path so we can use conda activate
 WORKDIR /home
-COPY environment.yml .
-ENV PATH=$home/bin:$PATH
-RUN conda update -n base -c defaults conda &&\
-    conda env create -f  environment.yml
 ADD .  .
+ENV PATH=$home/bin:$PATH
+RUN conda env update --file environment.yaml --prune && \
+    conda clean --all --force-pkgs-dirs

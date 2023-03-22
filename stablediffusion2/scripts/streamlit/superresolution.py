@@ -19,6 +19,7 @@ import time
 import traceback
 import requests
 import json 
+import shutil
 
 torch.set_grad_enabled(False)
 
@@ -118,7 +119,7 @@ def paint(sampler, image, prompt, seed, scale, h, w, steps, num_samples=1, callb
     return [put_watermark(Image.fromarray(img.astype(np.uint8)), wm_encoder) for img in result]
 
 
-def inference(image, prompt,seed,scale,steps,eta,num_samples,sampler=None):
+def inference(image, prompt,seed,scale,steps,eta,num_samples,sampler=None,shared_dir = None):
     st.title("Stable Diffusion Upscaling")
     # run via streamlit run scripts/demo/depth2img.py <path-tp-config> <path-to-ckpt>
     if sampler == None:
@@ -155,11 +156,18 @@ def inference(image, prompt,seed,scale,steps,eta,num_samples,sampler=None):
             eta=eta
         )
 
-    outpath = "/prediction"
+    outpath = "prediction"
     sample_path = os.path.join(outpath, "samples"+"_"+str(uuid.uuid4())+"_"+str(seed))
     os.makedirs(sample_path, exist_ok=True)
     for base_count,image in enumerate(result):
-        image.save(os.path.join(sample_path, f"{base_count:05}.png"))
+        save_path = os.path.join(sample_path, f"{base_count:05}.png")
+        image.save(save_path)
+        shared_dir.fput_object(
+        "diffusion2results", save_path, save_path,
+    ) 
+
+    # --------- Writing results to minIO bucket ----------
+    
     return sample_path
         
 
