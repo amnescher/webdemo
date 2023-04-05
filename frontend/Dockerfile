@@ -4,7 +4,6 @@ RUN groupadd --gid 1000 appuser \
 RUN pip3 install --no-cache-dir --upgrade \
     pip \
     virtualenv
-
 RUN apt-get update && apt-get install -y \
     build-essential \
     software-properties-common \

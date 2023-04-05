@@ -7,18 +7,17 @@ import numpy as np
 from PIL import Image
 from typing import List
 import config
-from stablediffusion1.utils import donut_app,load_config_port
 import requests
+from utils import donut_app
 
+# port_config = load_config_port()
 
-port_config = load_config_port()
-
-try:
-        requests.post(
-                                f"http://{port_config.model_ports.db[-1]}:8509/initdb"
-                            )
-except:
-        print("database initialization failed")
+# try:
+#         requests.post(
+#                                 f"http://{port_config.model_ports.db[-1]}:8509/initdb"
+#                             )
+# except:
+#         print("database initialization failed")
 
 
 app = FastAPI()

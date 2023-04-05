@@ -17,16 +17,18 @@ services:
         STABLE_V1_IP: ${STABLE_V1_IP}
         STABLE_V2_IP: ${STABLE_V2_IP}
         FACERES_IP: ${FACERES_IP}
+        ControlNet_IP: ${ControlNet_IP}
         DB_IP: ${DB_IP}
       depends_on:
        - minio
        - minio_upload
-       - backend_stable_v1_1
-      #  - donut_1
-       - backend_stable_v2_1
+       - controlnet
+      #  - backend_stable_v1_1
+      # #  - donut_1
+      #  - backend_stable_v2_1
       #  - gfpgan_1
-       - appsqldb
-       - req_db
+      #  - appsqldb
+      #  - req_db
   minio:
     image: minio/minio
     ports:
@@ -49,35 +51,13 @@ services:
       access_key: ${MINIO_ROOT_USER}
       secret_key: ${MINIO_ROOT_PASSWORD}
       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-  backend_stable_v1_1:
+  controlnet:
     build: 
-      context: stablediffusion1
+      context: ControlNet
       network: host
-    command: conda run --no-capture-output -n ldm python backend.py
+    command: conda run --no-capture-output -n control python backend.py
     ports:
-      - 8504:8504
-    expose:
-        - "9000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    environment:
-      access_key: ${access_key}
-      secret_key: ${secret_key}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-      NVIDIA_VISIBLE_DEVICES: all
-      MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-  backend_stable_v2_1:
-    build: 
-      context: stablediffusion2
-      network: host
-    command:  conda run --no-capture-output -n ldm python backend.py
-    ports:
-      - 8505:8505
+      - 8507:8507
     expose:
         - "9000"
     deploy:
@@ -93,6 +73,50 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       NVIDIA_VISIBLE_DEVICES: all
       MINIO_SERVER_IP: ${MINIO_SERVER_IP}
+  # backend_stable_v1_1:
+  #   build: 
+  #     context: stablediffusion1
+  #     network: host
+  #   command: conda run --no-capture-output -n ldm python backend.py
+  #   ports:
+  #     - 8504:8504
+  #   expose:
+  #       - "9000"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   environment:
+  #     access_key: ${MINIO_ROOT_USER}
+  #     secret_key: ${MINIO_ROOT_PASSWORD}
+  #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  #     NVIDIA_VISIBLE_DEVICES: all
+  #     MINIO_SERVER_IP: ${MINIO_SERVER_IP}
+  # backend_stable_v2_1:
+  #   build: 
+  #     context: stablediffusion2
+  #     network: host
+  #   command:  conda run --no-capture-output -n ldm python backend.py
+  #   ports:
+  #     - 8505:8505
+  #   expose:
+  #       - "9000"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   environment:
+  #     access_key: ${MINIO_ROOT_USER}
+  #     secret_key: ${MINIO_ROOT_PASSWORD}
+  #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  #     NVIDIA_VISIBLE_DEVICES: all
+  #     MINIO_SERVER_IP: ${MINIO_SERVER_IP}
   # donut_1:
   #   build: 
   #     context: donut
@@ -115,8 +139,7 @@ services:
   #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
   #     NVIDIA_VISIBLE_DEVICES: all
   #     MINIO_SERVER_IP: ${MINIO_SERVER_IP}
-  #   volumes:
-  #        - prediction:/prediction
+
   # gfpgan_1:
   #   build: 
   #     context: GFPGAN
@@ -141,29 +164,29 @@ services:
   #     MINIO_SERVER_IP: ${MINIO_SERVER_IP}
   #   volumes:
   #        - prediction:/prediction
-  req_db:
-    build:
-      context: db
-      network: host
-    command: python3 backend.py
-    ports:
-      - 8509:8509
-    expose:
-        - "9000"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
-    volumes:
-      - prediction:/prediction
-  appsqldb:
-    image: mysql
-    ports:
-    - 3306:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
-    volumes:
-    - mysql:/var/lib/mysql
-    - mysql_config:/etc/mysql    
-volumes:
-  mysql:
-  mysql_config:
-  prediction:
+  # req_db:
+  #   build:
+  #     context: db
+  #     network: host
+  #   command: python3 backend.py
+  #   ports:
+  #     - 8509:8509
+  #   expose:
+  #       - "9000"
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
+  #   volumes:
+  #     - prediction:/prediction
+  # appsqldb:
+  #   image: mysql
+  #   ports:
+  #   - 3306:3306
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${YSQL_ROOT_PASSWORD}
+  #   volumes:
+  #   - mysql:/var/lib/mysql
+  #   - mysql_config:/etc/mysql    
+# volumes:
+#   mysql:
+#   mysql_config:
+#   prediction:

@@ -17,20 +17,3 @@ def donut_app(image, mode, question=""):
         return demo_process_vqa(image, question)
     return None
 
-def load_config_port():
-    #Connect to MINio bucket to download config file
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_key = os.getenv("secret_key")
-
-    minio_server_ip = os.environ.get('MINIO_SERVER_IP')
-    client = Minio(
-        f"{minio_server_ip}:9000",
-        access_key=access_key,
-        secret_key=secret_key,secure=False
-    )
-    # read configuration file includes port informations
-    client.fget_object("configdata", "storage/config.yaml", "config_file")
-    port = OmegaConf.load("config_file")
-    return port
-

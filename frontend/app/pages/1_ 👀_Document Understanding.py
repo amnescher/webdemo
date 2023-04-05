@@ -19,6 +19,17 @@ from omegaconf import OmegaConf
 load_dotenv()
 port_config = os.getenv("DOUNAT_IP")
 
+
+access_key = os.getenv("access_key")
+secret_key = os.getenv("secret_key")
+minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+
+client = Minio(
+    f"{minio_server_ip}:9000",
+    access_key=access_key,
+    secret_key=secret_key,secure=False
+)
+
 #add_bg_from_local("/home/storage/frontend/logo.jpeg")
 #image_id = Image.open("/home/images/frontend/ocr.jpeg")
 
@@ -68,7 +79,7 @@ if app_mode == "Document Parsing":
         #send request to backend donut model
             start = time.time()
             res = requests.post(
-                f"http://{port_config.model_ports.donut[-1]}:8503/donut_pars", files=files
+                f"http://{port_config}:8503/donut_pars", files=files
             )
             end = time.time()
         #get the response back from backend
@@ -81,10 +92,10 @@ if app_mode == "Document Parsing":
                     "runtime": (end - start)
                     }
 
-                db_req = requests.post(
-                f"http://{port_config}:8509/insert",
-                data=json.dumps(payload),
-            )
+            #     db_req = requests.post(
+            #     f"http://{port_config}:8509/insert",
+            #     data=json.dumps(payload),
+            # )
         except NameError:
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
         except json.decoder.JSONDecodeError: 
@@ -113,7 +124,7 @@ elif app_mode == "Document Visual Question Answering":
         #send request to backend
             start = time.time()
             res = requests.post(
-                f"http://{port_config.model_ports.donut[-1]}:8503/donut_vqa",
+                f"http://{port_config}:8503/donut_vqa",
                 data=data,
                 files=files,
             )
@@ -129,7 +140,7 @@ elif app_mode == "Document Visual Question Answering":
                     "runtime": (end - start)
                     }
                 db_req = requests.post(
-                f"http://{port_config.model_ports.db[-1]}:8509/insert",
+                f"http://{port_config}:8509/insert",
                 data=json.dumps(payload),
             )
         except NameError:
