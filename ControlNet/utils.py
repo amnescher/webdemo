@@ -41,7 +41,7 @@ def load_files_from_minIO_bucket():
     print("Downloading model from MinIO bucket")
     # Download model's weight from minio bucket and load model weight
     client.fget_object(
-        "modelweight", "model_weights/ControlNet/models/control_sd15_canny.pth", "model_weight"
+        "modelweight", "modelweight/ControlNet/models/control_sd15_canny.pth", "model_weight"
     )
     return "model_weight"
 

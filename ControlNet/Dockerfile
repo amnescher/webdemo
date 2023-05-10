@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04
+FROM python:3.7-slim-buster
 ENV TZ Europe/London
 ENV home /opt/conda
 # Install system dependencies

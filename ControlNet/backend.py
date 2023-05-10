@@ -58,6 +58,13 @@ def submit(req: canny2image = Depends(), files: UploadFile = File(...)):
         secret_key=secret_key,
         secure=False
     )
+
+    found = client.bucket_exists("controlnetresults")
+    
+    if not found:
+        client.make_bucket("controlnetresults")
+        print("controlnetresults bucket was made")
+
     for idx, image in enumerate(outputs):
         sample_path = os.path.join(local_path, f'grid-{idx:04}.png')
         Image.fromarray(image.astype(np.uint8)).save(sample_path)

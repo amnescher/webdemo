@@ -22,9 +22,9 @@ def load_config_port():
         secret_key=secret_key,secure=False
     )
     client.fget_object(
-        "modelweight", "storage/model_weights/GFPGAN/GFPGANv1.3.pth", "model_weight"
+        "modelweight", "modelweight/GFPGAN/GFPGANv1.3.pth", "model_weight"
     )
     # read configuration file includes port informations
     client.fget_object("configdata", "storage/config.yaml", "config_file")
     port = OmegaConf.load("config_file")
-    return port , 
+    return port 

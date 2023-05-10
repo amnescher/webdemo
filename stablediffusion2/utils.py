@@ -153,9 +153,9 @@ def load_files_from_minIO_bucket():
     
     print("uploading model weights from MinIO bucket")
     # download model weights for txt2img/img2img, superresolution, and in-painting models from minio
-    client.fget_object("modelweight", "/model_weights/diff2/model_v2_768.ckpt", "model_weight_gen")
-    client.fget_object("modelweight", "/model_weights/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
-    client.fget_object("modelweight", "/model_weights/diff2/512-inpainting-ema.ckpt", "model_weight_inpainting")
+    client.fget_object("modelweight", "modelweight/diff2/model_v2_768.ckpt", "model_weight_gen")
+    client.fget_object("modelweight", "modelweight/diff2/x4-upscaler-ema.ckpt", "model_weight_scaling")
+    client.fget_object("modelweight", "modelweight/diff2/512-inpainting-ema.ckpt", "model_weight_inpainting")
     print("model successfully downloaded!")
     #load model config for txt2img/img2img
     config_gen = OmegaConf.load("configs/stable-diffusion/v2-inference-v.yaml")

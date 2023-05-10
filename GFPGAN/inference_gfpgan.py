@@ -134,7 +134,7 @@ def inference(img_path,version = '1.3' ,upscale = 2,bg_upsampler= 'realesrgan',b
         secret_key=secret_key,secure=False
     )
     client.fget_object(
-        "modelweight", "storage/model_weights/GFPGAN/GFPGANv1.3.pth", "model_weight"
+        "modelweight", "modelweight/GFPGAN/GFPGANv1.3.pth", "model_weight"
     )
 
     restorer = GFPGANer(

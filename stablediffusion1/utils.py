@@ -60,7 +60,7 @@ def load_files_from_minIO_bucket():
     print("Downloading model from MinIO bucket")
     # Download model's weight from minio bucket and load model weight
     client.fget_object(
-        "modelweight", "/model_weights/diff1/model_v1.ckpt", "model_weight"
+        "modelweight", "modelweight/diff1/model_v1.ckpt", "model_weight"
     )
     model = load_model_from_config(config, "model_weight")
     # Download port conf file from minio bucker and load config fie

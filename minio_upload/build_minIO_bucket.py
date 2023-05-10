@@ -26,25 +26,22 @@ def main():
     # # Make 'asiatrip' bucket if not exist.
 
 
-    # found = client.bucket_exists("modelweight")
+    found = client.bucket_exists("modelweight")
     
-    # if not found:
-    #         client.make_bucket("modelweight")
-    #         print("Bucket Made")
-    # # else:
-    # #      print("Bucket Found")
-    # data_path = "/home/ubuntu/dev/webapp/webdemo/storage/model_weights"
-    # bucketname = "modelweight"
-    # for root, dirs, files in os.walk(data_path):
-    #     for file in files:
-    #         filepath = os.path.join(root, file)
-    #         # Upload the file to the bucket with the same structure as the original folder
-    #         client.fput_object(bucketname, os.path.join(bucketname, os.path.relpath(filepath, data_path)), filepath)
-
-    client.fput_object(
-        "modelweight", "model_weights/ControlNet/models/control_sd15_canny.pth", "/storage/model_weights/ControlNet/models/control_sd15_canny.pth",
-    )
-
+    if not found:
+            client.make_bucket("modelweight")
+            print("Bucket Made")
+    else:
+         print("Bucket Found")
+    data_path = "/storage"
+    bucketname = "modelweight"
+    for root, dirs, files in os.walk(data_path):
+        for file in files:
+            filepath = os.path.join(root, file)
+            print(filepath)
+            # Upload the file to the bucket with the same structure as the original folder
+            #client.fput_object(bucketname, os.path.join(bucketname, os.path.relpath(filepath, data_path)), filepath)
+    print("model weights uploaded sucessfully!")
     
 
 
@@ -53,3 +50,5 @@ if __name__ == "__main__":
         main()
     except S3Error as exc:
         print("error occurred.", exc)
+
+        

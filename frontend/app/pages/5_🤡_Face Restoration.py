@@ -15,10 +15,21 @@ from dotenv import load_dotenv
 from minio import Minio
 from minio.error import S3Error
 from omegaconf import OmegaConf
-
+import zipfile
+import io
 
 load_dotenv()
 port_config = os.getenv("FACERES_IP")
+
+access_key = os.getenv("access_key")
+secret_key = os.getenv("secret_key")
+minio_server_ip = os.environ.get('MINIO_SERVER_IP')
+
+client = Minio(
+    f"{minio_server_ip}:9000",
+    access_key=access_key,
+    secret_key=secret_key,secure=False
+)
 
 
 st.sidebar.header("Select a demo")
@@ -74,27 +85,52 @@ if app_mode == "Face Restoration":
             try:
                 #get the respons includes paths to generated images
                 response = res.json()
-                cmp_path = response["response"]["cmp_path"]
                 image_path = response["response"]["image"]
-                result_path = response["response"]["path"]
-                st.success('Successful!')
+                client.fget_object(
+                            "gfpganresults", image_path, "grid_image"
+                        )
+                # cmp_path = response["response"]["cmp_path"]
+                # image_path = response["response"]["image"]
+                zip_path = response["response"]["zip_path"]
+                cmp_dir = response["response"]["cmp_path"]
+                # st.success('Successful!')
                     
-                st.image(Image.open(image_path))
-                cmp_list = glob(os.path.join(cmp_path, "*.png"))
-                st.info("Left: Before face restoration.    Right: After face restoration.", icon="ℹ️")
-                for filename in cmp_list:
-                     im = Image.open(filename)
-                     st.image(im)
-                
-                with open(result_path + ".zip", "rb") as file:
-                    btn = st.download_button(
-                        label="Download Results",
-                        data=file,
-                        file_name=result_path + ".zip",
-                    )
-                    # delete generated images and directories
-                shutil.rmtree(result_path)
-                os.remove(result_path + ".zip")
+                st.image(Image.open("grid_image"))
+                # cmp_list = glob(os.path.join(cmp_path, "*.png"))
+                # st.info("Left: Before face restoration.    Right: After face restoration.", icon="ℹ️")
+                # for filename in cmp_list:
+                #      im = Image.open(filename)
+                #      st.image(im)
+                objects = client.list_objects(bucket_name="gfpganresults", prefix=cmp_dir, recursive=True)
+
+                # Read each file in the directory
+                for obj in objects:
+                        # Download the file contents
+
+                        file_data = client.get_object("gfpganresults", obj.object_name).read()
+                        im = Image.open(io.BytesIO(file_data))
+                        st.image(im)
+                        
+
+                client.fget_object(
+                            "gfpganresults", zip_path, "zip_file"
+                        )
+
+                with open("zip_file", "rb") as file:
+                                btn = st.download_button(
+                                    label="Download Samples",
+                                    data=file,
+                                    file_name=zip_path,
+                                )
+                # with open(result_path + ".zip", "rb") as file:
+                #     btn = st.download_button(
+                #         label="Download Results",
+                #         data=file,
+                #         file_name=result_path + ".zip",
+                #     )
+                #     # delete generated images and directories
+                # shutil.rmtree(result_path)
+                # os.remove(result_path + ".zip")
               # enable user to download generated images 
             except NameError:
                 st.error('Unsuccessful. Encountered an error. Try again!', icon="🚨")
